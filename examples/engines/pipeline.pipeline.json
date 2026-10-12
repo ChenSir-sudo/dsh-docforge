@@ -1,0 +1,65 @@
+{
+  "layout": "pipeline",
+  "title": "横排主流程",
+  "kind": "流程图",
+  "size": [
+    1200,
+    220
+  ],
+  "nodes": [
+    {
+      "id": "a",
+      "title": "输入解析",
+      "kind": "default"
+    },
+    {
+      "id": "b",
+      "title": "意图识别",
+      "kind": "indigo",
+      "sub": [
+        "LLM 输出"
+      ]
+    },
+    {
+      "id": "c",
+      "title": "检索 / 工具",
+      "kind": "teal",
+      "sub": [
+        "按需触发"
+      ]
+    },
+    {
+      "id": "d",
+      "title": "结果生成",
+      "kind": "indigo",
+      "sub": [
+        "draft_answer"
+      ]
+    },
+    {
+      "id": "e",
+      "title": "输出",
+      "kind": "green",
+      "sub": [
+        "final_answer"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "a",
+      "to": "b",
+      "label": "解析"
+    },
+    {
+      "from": "d",
+      "to": "e",
+      "label": "≥ 80"
+    }
+  ],
+  "options": {
+    "y": 70,
+    "margin": 60
+  },
+  "id": "pipeline"
+}

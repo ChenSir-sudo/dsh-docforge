@@ -1,0 +1,133 @@
+/* ===========================================================================
+   Fenced code blocks — chrome, language accent, syntax token colours.
+
+   Loaded after base.css, so these rules are the last word on a `pre` that sits
+   inside a .code-block; a bare `pre` elsewhere is untouched.
+
+   Every colour is a theme token consumed through var(--token, <fallback>).
+   The theme's `--c-*-ink` and `--c-*` tokens are already mode-appropriate
+   (dark mode redefines them as lighter inks), so one definition covers light
+   and dark, and the literals are only the fallback for a page that carries no
+   theme at all. That keeps the light/dark toggle and all three themes working
+   without adding a single token to themes/*.json.
+
+   The accent is what tells a reader, before reading a token, whether they are
+   looking at a shell transcript (green), a JSON/YAML payload (teal), a Python
+   module (indigo), SQL (amber) or an untagged blob (slate).
+   =========================================================================== */
+
+.code-block {
+  /* Token palette. Comments and operators lean on --ink-3 / --c-slate, which
+     flip with the mode on their own; the inks are per-family accents. */
+  --tok-kw:  var(--c-indigo-ink, #3730a3);
+  --tok-str: var(--c-green-ink, #15803d);
+  --tok-num: var(--c-amber-ink, #a95c07);
+  --tok-fn:  var(--c-violet-ink, #6d28d9);
+  --tok-key: var(--c-teal-ink, #0f766e);
+  --tok-bi:  var(--c-red-ink, #b91c1c);
+  --tok-com: var(--ink-3, #6d7c92);
+  --tok-op:  var(--c-slate, #64748b);
+
+  /* Chrome, per block. The family rules below only restate these two. */
+  --tok-accent: var(--c-slate, #64748b);
+  --tok-tint: var(--surface-2, #f4f6fa);
+
+  position: relative;
+  margin: 18px 0;
+  border: 1px solid var(--line, #dce2ec);
+  border-left: 3px solid var(--tok-accent);
+  border-radius: var(--radius, 12px);
+  background: var(--tok-tint);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(16, 24, 40, .06));
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------ accent families */
+.code-block.fam-code  { --tok-accent: var(--c-indigo, #4f46e5);
+                        --tok-tint: var(--c-indigo-bg, #eef0ff); }
+.code-block.fam-data  { --tok-accent: var(--c-teal, #0d9488);
+                        --tok-tint: var(--c-teal-bg, #e4f6f3); }
+.code-block.fam-shell { --tok-accent: var(--c-green, #16a34a);
+                        --tok-tint: var(--c-green-bg, #e7f7ed); }
+.code-block.fam-query { --tok-accent: var(--c-amber, #d97706);
+                        --tok-tint: var(--c-amber-bg, #fdf3e2); }
+.code-block.fam-plain { --tok-accent: var(--c-slate, #64748b);
+                        --tok-tint: var(--surface-2, #f4f6fa); }
+
+/* ------------------------------------------------------------------ the body */
+/* base.css styles every `pre` as a card of its own; inside a .code-block the
+   chrome above replaces it, so the inner element is flattened rather than
+   nested into a box inside a box. The generous top padding is the band the
+   language badge sits in — it is real space, so the badge can never cover the
+   first line of code, however long that line is. */
+.code-block > pre {
+  margin: 0; padding: 26px 18px 15px;
+  border: 0; border-radius: 0; background: none; box-shadow: none;
+  font-size: 13.2px; line-height: 1.68;
+  overflow-x: auto;
+}
+.code-block > pre > code {
+  display: block;
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, Consolas,
+               "Liberation Mono", monospace);
+  font-size: inherit;
+  color: var(--ink, #121a27);
+  white-space: pre; background: none; padding: 0; border: 0;
+}
+
+/* The badge doubles as the copy button. The tag is written once, in the
+   markup, so the visible label and the copied code cannot drift apart. */
+.code-copy {
+  position: absolute; top: 7px; right: 12px;
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, Consolas,
+               "Liberation Mono", monospace);
+  font-size: 10.5px; font-weight: 700; line-height: 1.5;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--tok-accent);
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #dce2ec);
+  border-radius: 999px;
+  padding: 1px 8px 2px;
+  opacity: .85;
+  cursor: pointer;
+  transition: opacity 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+.code-copy:hover { opacity: 1; border-color: currentColor; }
+.code-copy:focus-visible { outline: 2px solid var(--c-indigo, #4f46e5); outline-offset: 2px; }
+.code-copy[data-copied] {
+  opacity: 1; color: var(--tok-str, #15803d); border-color: currentColor;
+}
+
+/* -------------------------------------------------------------------- tokens */
+.code-block .tok-kw  { color: var(--tok-kw); font-weight: 600; }
+.code-block .tok-str { color: var(--tok-str); }
+.code-block .tok-num { color: var(--tok-num); }
+.code-block .tok-fn  { color: var(--tok-fn); }
+.code-block .tok-key { color: var(--tok-key); }
+.code-block .tok-bi  { color: var(--tok-bi); font-weight: 600; }
+.code-block .tok-com { color: var(--tok-com); font-style: italic; }
+.code-block .tok-op  { color: var(--tok-op); }
+
+/* ---------------------------------------------------------------- dark mode */
+/* Same tokens, dark-appropriate fallbacks: a theme still wins, but a page
+   served without one is still readable. */
+[data-theme="dark"] .code-block {
+  --tok-kw:  var(--c-indigo-ink, #b9baff);
+  --tok-str: var(--c-green-ink, #90e5ad);
+  --tok-num: var(--c-amber-ink, #f6c473);
+  --tok-fn:  var(--c-violet-ink, #c9b6fd);
+  --tok-key: var(--c-teal-ink, #7fe6d8);
+  --tok-bi:  var(--c-red-ink, #fca5a5);
+  --tok-com: var(--ink-3, #8b98ab);
+  --tok-op:  var(--c-slate, #94a3b8);
+  border-color: var(--line, #2a3542);
+}
+[data-theme="dark"] .code-block::before {
+  background: var(--surface-3, #232c39);
+}
+
+/* -------------------------------------------------------------------- print */
+@media print {
+  .code-block { box-shadow: none; break-inside: avoid; }
+  .code-block::before { opacity: 1; }
+}

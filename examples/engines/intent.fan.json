@@ -1,0 +1,83 @@
+{
+  "id": "intent",
+  "layout": "fan",
+  "title": "意图识别与条件路由",
+  "kind": "流转图",
+  "size": [
+    1100,
+    400
+  ],
+  "nodes": [
+    {
+      "id": "msg",
+      "title": "最新用户消息",
+      "sub": [
+        "messages[-1]"
+      ]
+    },
+    {
+      "id": "cls",
+      "title": "意图识别",
+      "sub": [
+        "LLM 结构化输出"
+      ],
+      "kind": "indigo"
+    },
+    {
+      "id": "route",
+      "title": "条件路由",
+      "sub": [
+        "route_by_intent"
+      ],
+      "kind": "violet"
+    },
+    {
+      "id": "retrieve",
+      "title": "retrieve",
+      "kind": "teal"
+    },
+    {
+      "id": "tool",
+      "title": "tool_executor",
+      "kind": "teal"
+    },
+    {
+      "id": "human",
+      "title": "human_review",
+      "kind": "amber"
+    },
+    {
+      "id": "gen",
+      "title": "generate（兜底）",
+      "kind": "indigo"
+    }
+  ],
+  "options": {
+    "source": "route",
+    "targets": [
+      "retrieve",
+      "tool",
+      "human",
+      "gen"
+    ],
+    "y": 60,
+    "labels": {
+      "retrieve": "search",
+      "tool": "tool_call",
+      "human": "approval",
+      "gen": "else"
+    },
+    "prefix": [
+      "msg",
+      "cls"
+    ]
+  },
+  "notes": [
+    {
+      "x": 50,
+      "y": 380,
+      "text": "兜底分支必须存在：任何未识别意图都落到 generate。",
+      "cls": "d-fig-t"
+    }
+  ]
+}

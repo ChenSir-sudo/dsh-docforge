@@ -1,0 +1,108 @@
+{
+  "layout": "state",
+  "title": "任务状态机",
+  "kind": "状态图",
+  "size": [
+    1200,
+    560
+  ],
+  "nodes": [
+    {
+      "id": "p",
+      "title": "pending",
+      "kind": "slate",
+      "sub": [
+        "已入队"
+      ]
+    },
+    {
+      "id": "r",
+      "title": "running",
+      "kind": "indigo",
+      "sub": [
+        "执行中"
+      ]
+    },
+    {
+      "id": "s",
+      "title": "succeeded",
+      "kind": "green",
+      "sub": [
+        "终态"
+      ]
+    },
+    {
+      "id": "w",
+      "title": "waiting_approval",
+      "kind": "amber",
+      "sub": [
+        "checkpointer 挂起"
+      ]
+    },
+    {
+      "id": "f",
+      "title": "failed",
+      "kind": "red",
+      "sub": [
+        "可重试"
+      ]
+    },
+    {
+      "id": "d",
+      "title": "dead_letter",
+      "kind": "red",
+      "sub": [
+        "终态"
+      ]
+    }
+  ],
+  "rows": [
+    [
+      "w"
+    ],
+    [
+      "p",
+      "r",
+      "s"
+    ],
+    [
+      "f",
+      "d"
+    ]
+  ],
+  "transitions": [
+    {
+      "from": "p",
+      "to": "r",
+      "label": "claim"
+    },
+    {
+      "from": "r",
+      "to": "s",
+      "label": "完成"
+    },
+    {
+      "from": "r",
+      "to": "w",
+      "label": "requires_approval"
+    },
+    {
+      "from": "w",
+      "to": "s",
+      "label": "approved"
+    },
+    {
+      "from": "r",
+      "to": "f",
+      "label": "失败"
+    },
+    {
+      "from": "f",
+      "to": "d",
+      "label": "重试耗尽",
+      "out": "right",
+      "into": "left"
+    }
+  ],
+  "id": "state"
+}

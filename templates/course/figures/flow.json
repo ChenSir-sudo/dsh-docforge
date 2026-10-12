@@ -1,0 +1,21 @@
+{
+  "id": "flow",
+  "layout": "dag",
+  "title": "工作流程",
+  "kind": "流程图",
+  "nodes": [
+    {"id": "in", "title": "输入", "sub": ["一次请求"]},
+    {"id": "parse", "title": "解析", "sub": ["结构化"], "kind": "indigo"},
+    {"id": "fast", "title": "快路径", "sub": ["缓存命中"], "kind": "teal"},
+    {"id": "slow", "title": "慢路径", "sub": ["重新计算"], "kind": "amber"},
+    {"id": "out", "title": "返回", "sub": ["统一结构"], "kind": "green"}
+  ],
+  "edges": [
+    {"from": "in", "to": "parse"},
+    {"from": "parse", "to": "fast", "label": "命中"},
+    {"from": "parse", "to": "slow", "label": "未命中"},
+    {"from": "fast", "to": "out"},
+    {"from": "slow", "to": "out"}
+  ],
+  "options": {"center_sinks": true}
+}

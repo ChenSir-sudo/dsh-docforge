@@ -1,0 +1,141 @@
+{
+  "id": "intent",
+  "layout": "fan",
+  "title": "意图识别与条件路由",
+  "kind": "流转图",
+  "size": [
+    1240,
+    420
+  ],
+  "nodes": [
+    {
+      "id": "msg",
+      "title": "最新用户消息",
+      "sub": [
+        "messages[-1]"
+      ]
+    },
+    {
+      "id": "cls",
+      "title": "意图识别",
+      "sub": [
+        "LLM 结构化输出"
+      ],
+      "kind": "indigo"
+    },
+    {
+      "id": "route",
+      "title": "条件路由",
+      "sub": [
+        "route_by_intent"
+      ],
+      "kind": "violet"
+    },
+    {
+      "id": "retrieve",
+      "title": "retrieve",
+      "sub": [
+        "search"
+      ],
+      "kind": "teal",
+      "width": 280,
+      "height": 58
+    },
+    {
+      "id": "tool",
+      "title": "tool_executor",
+      "sub": [
+        "tool_call"
+      ],
+      "kind": "teal",
+      "width": 280,
+      "height": 58
+    },
+    {
+      "id": "human",
+      "title": "human_review",
+      "sub": [
+        "approval"
+      ],
+      "kind": "amber",
+      "width": 280,
+      "height": 58
+    },
+    {
+      "id": "gen",
+      "title": "generate（兜底）",
+      "sub": [
+        "else"
+      ],
+      "kind": "indigo",
+      "width": 280,
+      "height": 58
+    }
+  ],
+  "edges": [
+    {
+      "from": "msg",
+      "to": "cls"
+    },
+    {
+      "from": "cls",
+      "to": "route"
+    }
+  ],
+  "options": {
+    "source": "route",
+    "prefix": [
+      "msg",
+      "cls"
+    ],
+    "targets": [
+      "retrieve",
+      "tool",
+      "human",
+      "gen"
+    ],
+    "y": 40,
+    "margin": 60,
+    "target_gap": 16,
+    "chain_gap": 60,
+    "riser_gap": 80,
+    "width": 1240,
+    "fs": 14.5,
+    "subfs": 10.5
+  },
+  "notes": [
+    {
+      "type": "text",
+      "x": 200,
+      "y": 130,
+      "cls": "d-code",
+      "fs": 10.5,
+      "text": "user_intent"
+    },
+    {
+      "type": "hline",
+      "x": 60,
+      "y": 348,
+      "x2": 1180,
+      "kind": "amber",
+      "dashed": true,
+      "opacity": 0.6
+    },
+    {
+      "type": "text",
+      "x": 60,
+      "y": 370,
+      "text": "兜底分支必须存在",
+      "cls": "d-fig-t",
+      "fs": 12.5
+    },
+    {
+      "type": "text",
+      "x": 190,
+      "y": 370,
+      "cls": "d-sub",
+      "fs": 12.5,
+      "text": "：任何未识别意图都落到 generate，路由表不会出现死路；新增意图只加一条条件边，不动其他节点。"
+    }
+  ]
+}

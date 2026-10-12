@@ -1,0 +1,93 @@
+{
+  "id": "layers",
+  "layout": "layers",
+  "title": "分层结构",
+  "kind": "架构图",
+  "nodes": [
+    {
+      "id": "state",
+      "title": "状态",
+      "sub": [
+        "AgentState"
+      ],
+      "kind": "indigo"
+    },
+    {
+      "id": "graph",
+      "title": "图",
+      "sub": [
+        "StateGraph"
+      ],
+      "kind": "indigo"
+    },
+    {
+      "id": "router",
+      "title": "路由",
+      "sub": [
+        "条件边 + 兜底"
+      ],
+      "kind": "indigo"
+    },
+    {
+      "id": "api",
+      "title": "后端 API",
+      "sub": [
+        "提交 / 流式"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "store",
+      "title": "数据底座",
+      "sub": [
+        "库 / 向量 / 对象"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "sec",
+      "title": "安全与权限",
+      "sub": [
+        "租户隔离"
+      ],
+      "kind": "amber"
+    }
+  ],
+  "groups": [
+    {
+      "label": "内核层",
+      "sub": "怎么想",
+      "kind": "indigo",
+      "nodes": [
+        "state",
+        "graph",
+        "router"
+      ]
+    },
+    {
+      "label": "外壳层",
+      "sub": "怎么用",
+      "kind": "teal",
+      "nodes": [
+        "api",
+        "store"
+      ]
+    },
+    {
+      "label": "运维层",
+      "sub": "怎么管",
+      "kind": "amber",
+      "nodes": [
+        "sec"
+      ]
+    }
+  ],
+  "options": {
+    "margin": 36,
+    "label_h": 46,
+    "band_gap": 36,
+    "allow_isolated": [
+      "sec"
+    ]
+  }
+}

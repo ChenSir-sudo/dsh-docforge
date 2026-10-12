@@ -1,0 +1,340 @@
+{
+  "id": "human",
+  "layout": "free",
+  "title": "前端与人工介入闭环",
+  "kind": "流转图",
+  "size": [
+    1240,
+    596
+  ],
+  "nodes": [
+    {
+      "id": "ui1",
+      "title": "任务提交入口",
+      "x": 58,
+      "y": 96,
+      "sub": [
+        "表单 · 参数 · 文件上传"
+      ],
+      "kind": "teal",
+      "fs": 13,
+      "subfs": 10.5,
+      "width": 496,
+      "height": 52
+    },
+    {
+      "id": "ui2",
+      "title": "流式输出与轮询进度",
+      "x": 58,
+      "y": 158,
+      "sub": [
+        "SSE / WebSocket / polling"
+      ],
+      "kind": "teal",
+      "fs": 13,
+      "subfs": 10.5,
+      "width": 496,
+      "height": 52
+    },
+    {
+      "id": "ui3",
+      "title": "中间步骤展示",
+      "x": 58,
+      "y": 220,
+      "sub": [
+        "意图 · 检索 · 工具调用 · 自省"
+      ],
+      "kind": "teal",
+      "fs": 13,
+      "subfs": 10.5,
+      "width": 496,
+      "height": 52
+    },
+    {
+      "id": "ui4",
+      "title": "最终结果与 artifacts",
+      "x": 58,
+      "y": 282,
+      "sub": [
+        "在线查看 · 下载 · 导出"
+      ],
+      "kind": "teal",
+      "fs": 13,
+      "subfs": 10.5,
+      "width": 496,
+      "height": 52
+    },
+    {
+      "id": "ui5",
+      "title": "人工审核按钮",
+      "x": 58,
+      "y": 344,
+      "sub": [
+        "通过 / 修正 / 拒绝"
+      ],
+      "kind": "teal",
+      "fs": 13,
+      "subfs": 10.5,
+      "width": 496,
+      "height": 52
+    },
+    {
+      "id": "ui6",
+      "title": "配置与监控面板",
+      "x": 58,
+      "y": 406,
+      "sub": [
+        "模型 · 超时 · 重试 · 并发 · 成本"
+      ],
+      "kind": "teal",
+      "fs": 13,
+      "subfs": 10.5,
+      "width": 496,
+      "height": 52
+    },
+    {
+      "id": "hop1",
+      "title": "高风险动作审批",
+      "x": 630,
+      "y": 96,
+      "sub": [
+        "工具调用前挂起，等待 approve / reject"
+      ],
+      "kind": "amber",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 516,
+      "height": 62
+    },
+    {
+      "id": "hop2",
+      "title": "低质量结果人工修正",
+      "x": 630,
+      "y": 174,
+      "sub": [
+        "评分过低且无法自动修正时转人工"
+      ],
+      "kind": "amber",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 516,
+      "height": 62
+    },
+    {
+      "id": "hop3",
+      "title": "拒绝与重试",
+      "x": 630,
+      "y": 252,
+      "sub": [
+        "rejected → 修参数 → 重新入队"
+      ],
+      "kind": "amber",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 516,
+      "height": 62
+    },
+    {
+      "id": "hop4",
+      "title": "反馈写回数据库",
+      "x": 630,
+      "y": 330,
+      "sub": [
+        "feedback 表，可查询、可导出"
+      ],
+      "kind": "amber",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 516,
+      "height": 62
+    },
+    {
+      "id": "step1",
+      "title": "提交任务",
+      "x": 470,
+      "y": 512,
+      "kind": "teal",
+      "fs": 14,
+      "width": 152,
+      "height": 60
+    },
+    {
+      "id": "step2",
+      "title": "观察过程",
+      "x": 650,
+      "y": 512,
+      "kind": "teal",
+      "fs": 14,
+      "width": 152,
+      "height": 60
+    },
+    {
+      "id": "step3",
+      "title": "审核结果",
+      "x": 830,
+      "y": 512,
+      "kind": "amber",
+      "fs": 14,
+      "width": 152,
+      "height": 60
+    },
+    {
+      "id": "step4",
+      "title": "反馈回流",
+      "x": 1010,
+      "y": 512,
+      "kind": "violet",
+      "fs": 14,
+      "width": 152,
+      "height": 60
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          888,
+          158
+        ],
+        [
+          888,
+          171
+        ]
+      ],
+      "kind": "amber",
+      "from": "hop1",
+      "to": "hop2"
+    },
+    {
+      "pts": [
+        [
+          888,
+          236
+        ],
+        [
+          888,
+          249
+        ]
+      ],
+      "kind": "amber",
+      "from": "hop2",
+      "to": "hop3"
+    },
+    {
+      "pts": [
+        [
+          888,
+          314
+        ],
+        [
+          888,
+          327
+        ]
+      ],
+      "kind": "amber",
+      "from": "hop3",
+      "to": "hop4"
+    },
+    {
+      "pts": [
+        [
+          626,
+          542
+        ],
+        [
+          646,
+          542
+        ]
+      ],
+      "kind": "teal",
+      "from": "step1",
+      "to": "step2",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          806,
+          542
+        ],
+        [
+          826,
+          542
+        ]
+      ],
+      "kind": "amber",
+      "from": "step2",
+      "to": "step3",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          986,
+          542
+        ],
+        [
+          1006,
+          542
+        ]
+      ],
+      "kind": "violet",
+      "from": "step3",
+      "to": "step4",
+      "r": 6
+    }
+  ],
+  "bands": [
+    {
+      "x": 36,
+      "y": 36,
+      "w": 536,
+      "h": 434,
+      "kind": "teal",
+      "rx": 16.0,
+      "label": "前端最小可用界面"
+    },
+    {
+      "x": 608,
+      "y": 36,
+      "w": 556,
+      "h": 434,
+      "kind": "amber",
+      "rx": 16.0,
+      "label": "人工介入闭环"
+    }
+  ],
+  "notes": [
+    {
+      "type": "text",
+      "x": 630,
+      "y": 446,
+      "text": "反馈 → 评估集 → 标注 → 后续微调（见数据飞轮）",
+      "cls": "d-sub",
+      "fs": 11.5,
+      "anchor": "start"
+    },
+    {
+      "type": "text",
+      "x": 60,
+      "y": 492,
+      "text": "验收路径：用户可完整走通「提交 → 观察 → 审核 → 反馈」",
+      "cls": "d-fig-t",
+      "fs": 12.5,
+      "anchor": "start"
+    }
+  ],
+  "options": {
+    "allow_isolated": [
+      "ui1",
+      "ui2",
+      "ui3",
+      "ui4",
+      "ui5",
+      "ui6",
+      "step1"
+    ],
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

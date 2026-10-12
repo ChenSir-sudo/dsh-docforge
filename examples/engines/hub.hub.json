@@ -1,0 +1,90 @@
+{
+  "layout": "hub",
+  "title": "中心 + 约束",
+  "kind": "架构图",
+  "size": [
+    1200,
+    560
+  ],
+  "nodes": [
+    {
+      "id": "c",
+      "title": "工具执行节点",
+      "kind": "teal",
+      "sub": [
+        "MCP · HTTP · CLI"
+      ]
+    },
+    {
+      "id": "l1",
+      "title": "超时控制",
+      "kind": "slate",
+      "sub": [
+        "10–30 秒"
+      ]
+    },
+    {
+      "id": "l2",
+      "title": "有限重试",
+      "kind": "slate",
+      "sub": [
+        "指数退避"
+      ]
+    },
+    {
+      "id": "l3",
+      "title": "幂等保障",
+      "kind": "slate",
+      "sub": [
+        "State 记录标记"
+      ]
+    },
+    {
+      "id": "r1",
+      "title": "权限前置",
+      "kind": "slate",
+      "sub": [
+        "校验租户 / 角色"
+      ]
+    },
+    {
+      "id": "r2",
+      "title": "统一返回",
+      "kind": "slate",
+      "sub": [
+        "{status,data,error}"
+      ]
+    },
+    {
+      "id": "r3",
+      "title": "降级出口",
+      "kind": "red",
+      "sub": [
+        "不中断全图"
+      ]
+    },
+    {
+      "id": "b",
+      "title": "审计留痕",
+      "kind": "violet",
+      "sub": [
+        "写 audit_logs"
+      ]
+    }
+  ],
+  "options": {
+    "center": "c",
+    "left": [
+      "l1",
+      "l2",
+      "l3"
+    ],
+    "right": [
+      "r1",
+      "r2",
+      "r3"
+    ],
+    "below": "b"
+  },
+  "id": "hub"
+}

@@ -1,0 +1,381 @@
+{
+  "id": "kernel",
+  "layout": "free",
+  "title": "Agent 内核主流程",
+  "kind": "流程图",
+  "size": [
+    1240,
+    560
+  ],
+  "nodes": [
+    {
+      "id": "parse",
+      "title": "输入解析",
+      "x": 25,
+      "y": 260,
+      "width": 96.0,
+      "height": 60
+    },
+    {
+      "id": "intent",
+      "title": "意图识别",
+      "x": 165,
+      "y": 260,
+      "width": 96.0,
+      "height": 60
+    },
+    {
+      "id": "route",
+      "title": "条件路由",
+      "x": 315,
+      "y": 250,
+      "sub": [
+        "条件边 + 兜底"
+      ],
+      "kind": "indigo",
+      "width": 112.5,
+      "height": 80
+    },
+    {
+      "id": "rag",
+      "title": "知识检索",
+      "x": 516,
+      "y": 60,
+      "sub": [
+        "召回 / 重排 / 重写"
+      ],
+      "kind": "teal",
+      "width": 142.9,
+      "height": 66
+    },
+    {
+      "id": "tool",
+      "title": "工具执行",
+      "x": 720,
+      "y": 60,
+      "sub": [
+        "超时 / 重试 / 幂等"
+      ],
+      "kind": "teal",
+      "width": 142.9,
+      "height": 66
+    },
+    {
+      "id": "gen",
+      "title": "结果生成",
+      "x": 530,
+      "y": 248,
+      "sub": [
+        "依据检索与工具结果起草"
+      ],
+      "kind": "indigo",
+      "width": 320,
+      "height": 84
+    },
+    {
+      "id": "review",
+      "title": "质量审查",
+      "x": 902,
+      "y": 250,
+      "sub": [
+        "四维评分"
+      ],
+      "kind": "violet",
+      "width": 96.0,
+      "height": 80
+    },
+    {
+      "id": "out",
+      "title": "输出",
+      "x": 1060,
+      "y": 258,
+      "sub": [
+        "final_answer"
+      ],
+      "kind": "green",
+      "width": 111.9,
+      "height": 64
+    },
+    {
+      "id": "fallback",
+      "title": "返回最佳结果",
+      "x": 1046,
+      "y": 350,
+      "sub": [
+        "达迭代上限"
+      ],
+      "kind": "amber",
+      "width": 126.0,
+      "height": 66
+    },
+    {
+      "id": "human",
+      "title": "人工介入",
+      "x": 1080,
+      "y": 460,
+      "sub": [
+        "approval_status"
+      ],
+      "kind": "red",
+      "width": 130.9,
+      "height": 62
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          121.0,
+          290.0
+        ],
+        [
+          161,
+          290.0
+        ]
+      ],
+      "kind": "line",
+      "from": "parse",
+      "to": "intent"
+    },
+    {
+      "pts": [
+        [
+          261.0,
+          290.0
+        ],
+        [
+          311,
+          290.0
+        ]
+      ],
+      "kind": "line",
+      "from": "intent",
+      "to": "route"
+    },
+    {
+      "pts": [
+        [
+          405,
+          250
+        ],
+        [
+          405,
+          44
+        ],
+        [
+          587,
+          44
+        ],
+        [
+          587,
+          56
+        ]
+      ],
+      "kind": "teal",
+      "label": "search",
+      "from": "route",
+      "to": "rag",
+      "lx": 470,
+      "ly": 34
+    },
+    {
+      "pts": [
+        [
+          340,
+          250
+        ],
+        [
+          340,
+          20
+        ],
+        [
+          791,
+          20
+        ],
+        [
+          791,
+          56
+        ]
+      ],
+      "kind": "teal",
+      "label": "tool_call",
+      "from": "route",
+      "to": "tool",
+      "lx": 640,
+      "ly": 34
+    },
+    {
+      "pts": [
+        [
+          427.5,
+          290.0
+        ],
+        [
+          526,
+          290.0
+        ]
+      ],
+      "kind": "line",
+      "label": "else 兜底",
+      "from": "route",
+      "to": "gen",
+      "lx": 478.75,
+      "ly": 270
+    },
+    {
+      "pts": [
+        [
+          587,
+          126
+        ],
+        [
+          587,
+          244
+        ]
+      ],
+      "kind": "teal",
+      "from": "rag",
+      "to": "gen"
+    },
+    {
+      "pts": [
+        [
+          791,
+          126
+        ],
+        [
+          791,
+          244
+        ]
+      ],
+      "kind": "teal",
+      "from": "tool",
+      "to": "gen"
+    },
+    {
+      "pts": [
+        [
+          850,
+          290.0
+        ],
+        [
+          898,
+          290.0
+        ]
+      ],
+      "kind": "line",
+      "from": "gen",
+      "to": "review"
+    },
+    {
+      "pts": [
+        [
+          998.0,
+          290.0
+        ],
+        [
+          1056,
+          290.0
+        ]
+      ],
+      "kind": "green",
+      "label": "≥ 80",
+      "from": "review",
+      "to": "out",
+      "lx": 1029.0,
+      "ly": 270
+    },
+    {
+      "pts": [
+        [
+          965,
+          330
+        ],
+        [
+          965,
+          383
+        ],
+        [
+          1042,
+          383
+        ]
+      ],
+      "kind": "amber",
+      "label": "达上限",
+      "from": "review",
+      "to": "fallback",
+      "lx": 1006,
+      "ly": 352,
+      "anchor": "end"
+    },
+    {
+      "pts": [
+        [
+          990,
+          330
+        ],
+        [
+          1225,
+          330
+        ],
+        [
+          1225,
+          456
+        ],
+        [
+          1150,
+          456
+        ]
+      ],
+      "kind": "red",
+      "label": "无法修正",
+      "from": "review",
+      "to": "human",
+      "lx": 1160,
+      "ly": 442,
+      "anchor": "middle"
+    },
+    {
+      "pts": [
+        [
+          960,
+          330
+        ],
+        [
+          960,
+          440
+        ],
+        [
+          560,
+          440
+        ],
+        [
+          560,
+          336
+        ]
+      ],
+      "kind": "amber",
+      "label": "refine：评分 < 80 且未达迭代上限 → iteration_count + 1",
+      "from": "review",
+      "to": "gen",
+      "dashed": true,
+      "lx": 760,
+      "ly": 428
+    }
+  ],
+  "notes": [
+    {
+      "type": "text",
+      "x": 25,
+      "y": 516,
+      "text": "所有节点读写同一个 AgentState：字段即节点之间的契约",
+      "cls": "d-fig-t",
+      "fs": 12.5,
+      "anchor": "start"
+    }
+  ],
+  "options": {
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

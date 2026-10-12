@@ -1,0 +1,279 @@
+{
+  "id": "rag",
+  "layout": "free",
+  "title": "知识获取条件子流程",
+  "kind": "流程图",
+  "size": [
+    1240,
+    546
+  ],
+  "nodes": [
+    {
+      "id": "build",
+      "title": "query 构建",
+      "x": 90,
+      "y": 118,
+      "sub": [
+        "结合意图与上下文"
+      ],
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 120.0,
+      "height": 62
+    },
+    {
+      "id": "search",
+      "title": "检索",
+      "x": 320,
+      "y": 118,
+      "sub": [
+        "向量库 / 关键词搜索"
+      ],
+      "kind": "teal",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 137.3,
+      "height": 62
+    },
+    {
+      "id": "score",
+      "title": "相关性评分",
+      "x": 580,
+      "y": 118,
+      "sub": [
+        "阈值判定"
+      ],
+      "kind": "teal",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 106.0,
+      "height": 62
+    },
+    {
+      "id": "inject",
+      "title": "注入生成",
+      "x": 850,
+      "y": 118,
+      "sub": [
+        "写回 retrieval_context"
+      ],
+      "kind": "indigo",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 161.0,
+      "height": 62
+    },
+    {
+      "id": "rewrite",
+      "title": "查询重写",
+      "x": 560,
+      "y": 268,
+      "sub": [
+        "改写 / 拆解 / 扩写"
+      ],
+      "kind": "amber",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 133.6,
+      "height": 62
+    },
+    {
+      "id": "degrade",
+      "title": "降级到通用回复",
+      "x": 880,
+      "y": 268,
+      "sub": [
+        "只答已知，不编造"
+      ],
+      "kind": "red",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 134.0,
+      "height": 62
+    },
+    {
+      "id": "chip0",
+      "title": "向量库：文档 / 切块 / embedding / 集合",
+      "x": 52,
+      "y": 452,
+      "kind": "violet",
+      "fs": 11,
+      "width": 286,
+      "height": 44
+    },
+    {
+      "id": "chip1",
+      "title": "关系库：文档元数据 / 权限 / 版本",
+      "x": 352,
+      "y": 452,
+      "kind": "violet",
+      "fs": 11,
+      "width": 286,
+      "height": 44
+    },
+    {
+      "id": "chip2",
+      "title": "对象存储：原始文件 / 中间产物",
+      "x": 652,
+      "y": 452,
+      "kind": "violet",
+      "fs": 11,
+      "width": 286,
+      "height": 44
+    },
+    {
+      "id": "chip3",
+      "title": "缓存：热点检索结果 / embedding 缓存",
+      "x": 952,
+      "y": 452,
+      "kind": "violet",
+      "fs": 11,
+      "width": 286,
+      "height": 44
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          260,
+          149
+        ],
+        [
+          317,
+          149
+        ]
+      ],
+      "kind": "line",
+      "from": "build",
+      "to": "search"
+    },
+    {
+      "pts": [
+        [
+          520,
+          149
+        ],
+        [
+          577,
+          149
+        ]
+      ],
+      "kind": "line",
+      "label": "top-k",
+      "from": "search",
+      "to": "score",
+      "lx": 548,
+      "ly": 134
+    },
+    {
+      "pts": [
+        [
+          730,
+          149
+        ],
+        [
+          847,
+          149
+        ]
+      ],
+      "kind": "green",
+      "label": "相关",
+      "from": "score",
+      "to": "inject",
+      "lx": 788,
+      "ly": 134
+    },
+    {
+      "pts": [
+        [
+          655,
+          180
+        ],
+        [
+          655,
+          264
+        ]
+      ],
+      "kind": "amber",
+      "label": "不相关",
+      "from": "score",
+      "to": "rewrite",
+      "lx": 667,
+      "ly": 214
+    },
+    {
+      "pts": [
+        [
+          560,
+          299
+        ],
+        [
+          420,
+          299
+        ],
+        [
+          420,
+          184
+        ]
+      ],
+      "kind": "amber",
+      "label": "重新检索",
+      "from": "rewrite",
+      "to": "search",
+      "lx": 490,
+      "ly": 284,
+      "r": 12
+    },
+    {
+      "pts": [
+        [
+          760,
+          299
+        ],
+        [
+          877,
+          299
+        ]
+      ],
+      "kind": "red",
+      "label": "重试仍无结果",
+      "from": "rewrite",
+      "to": "degrade",
+      "lx": 818,
+      "ly": 284
+    }
+  ],
+  "bands": [
+    {
+      "x": 36,
+      "y": 36,
+      "w": 1168,
+      "h": 340,
+      "kind": "teal",
+      "rx": 16.0,
+      "label": "知识获取 —— 条件子流程",
+      "sub": "Agent 自己决定何时检索，而不是每轮强制检索"
+    },
+    {
+      "x": 36,
+      "y": 404,
+      "w": 1168,
+      "h": 116,
+      "kind": "violet",
+      "rx": 16.0,
+      "label": "数据底座预留",
+      "sub": "阶段三先留字段，阶段七落库"
+    }
+  ],
+  "options": {
+    "allow_isolated": [
+      "chip0",
+      "chip1",
+      "chip2",
+      "chip3"
+    ],
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

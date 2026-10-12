@@ -1,0 +1,271 @@
+{
+  "id": "reflect",
+  "layout": "free",
+  "title": "自省与迭代控制",
+  "kind": "状态图",
+  "size": [
+    1200,
+    530
+  ],
+  "nodes": [
+    {
+      "id": "gen",
+      "title": "结果生成",
+      "x": 120,
+      "y": 190,
+      "sub": [
+        "draft_answer"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 105.3,
+      "height": 70
+    },
+    {
+      "id": "review",
+      "title": "质量审查",
+      "x": 380,
+      "y": 190,
+      "sub": [
+        "准确性 / 完整性 / 格式 / 安全"
+      ],
+      "kind": "violet",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 193.0,
+      "height": 70
+    },
+    {
+      "id": "route",
+      "title": "条件路由",
+      "x": 700,
+      "y": 190,
+      "sub": [
+        "should_refine"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 111.1,
+      "height": 70
+    },
+    {
+      "id": "out",
+      "title": "输出",
+      "x": 1006,
+      "y": 80,
+      "sub": [
+        "final_answer"
+      ],
+      "kind": "green",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 105.3,
+      "height": 64
+    },
+    {
+      "id": "fallback",
+      "title": "返回当前最佳结果",
+      "x": 1006,
+      "y": 190,
+      "sub": [
+        "iteration_count ≥ max"
+      ],
+      "kind": "amber",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 157.3,
+      "height": 64
+    },
+    {
+      "id": "human",
+      "title": "人工介入",
+      "x": 1006,
+      "y": 300,
+      "sub": [
+        "approval_status"
+      ],
+      "kind": "red",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 122.6,
+      "height": 64
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          310,
+          225.0
+        ],
+        [
+          376,
+          225.0
+        ]
+      ],
+      "kind": "line",
+      "from": "gen",
+      "to": "review"
+    },
+    {
+      "pts": [
+        [
+          560,
+          225.0
+        ],
+        [
+          696,
+          225.0
+        ]
+      ],
+      "kind": "line",
+      "from": "review",
+      "to": "route"
+    },
+    {
+      "pts": [
+        [
+          813,
+          225
+        ],
+        [
+          940,
+          225
+        ],
+        [
+          940,
+          112
+        ],
+        [
+          1002,
+          112
+        ]
+      ],
+      "kind": "green",
+      "label": "accept：≥ 80",
+      "from": "route",
+      "to": "out",
+      "lx": 930,
+      "ly": 168,
+      "anchor": "end"
+    },
+    {
+      "pts": [
+        [
+          813,
+          225
+        ],
+        [
+          1002,
+          225
+        ]
+      ],
+      "kind": "amber",
+      "label": "fallback：达上限",
+      "from": "route",
+      "to": "fallback",
+      "lx": 880,
+      "ly": 208,
+      "anchor": "middle"
+    },
+    {
+      "pts": [
+        [
+          813,
+          225
+        ],
+        [
+          840,
+          225
+        ],
+        [
+          840,
+          332
+        ],
+        [
+          1002,
+          332
+        ]
+      ],
+      "kind": "red",
+      "label": "无法自动修正",
+      "from": "route",
+      "to": "human",
+      "lx": 900,
+      "ly": 316,
+      "anchor": "middle"
+    },
+    {
+      "pts": [
+        [
+          730,
+          260
+        ],
+        [
+          730,
+          410
+        ],
+        [
+          180,
+          410
+        ],
+        [
+          180,
+          264
+        ]
+      ],
+      "kind": "amber",
+      "label": "refine：评分 < 80 且未达迭代上限 → iteration_count + 1",
+      "from": "route",
+      "to": "gen",
+      "dashed": true,
+      "lx": 500,
+      "ly": 396,
+      "r": 12
+    }
+  ],
+  "notes": [
+    {
+      "type": "text",
+      "x": 360,
+      "y": 172,
+      "text": "quality_score",
+      "cls": "d-code",
+      "fs": 11,
+      "anchor": "middle"
+    },
+    {
+      "type": "text",
+      "x": 640,
+      "y": 172,
+      "text": "iteration_count",
+      "cls": "d-code",
+      "fs": 11,
+      "anchor": "middle"
+    },
+    {
+      "type": "text",
+      "x": 60,
+      "y": 500,
+      "text": "硬约束",
+      "cls": "d-fig-t",
+      "fs": 12.5,
+      "anchor": "start"
+    },
+    {
+      "type": "text",
+      "x": 122,
+      "y": 500,
+      "text": "：必须有最大迭代次数；每轮必须有可度量的增量；达到上限返回当前最佳结果，而不是继续消耗 Token。",
+      "cls": "d-sub",
+      "fs": 12.5,
+      "anchor": "start"
+    }
+  ],
+  "options": {
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

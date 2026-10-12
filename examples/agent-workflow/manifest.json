@@ -1,0 +1,18 @@
+{
+  "example": "agent-workflow",
+  "source": "《通用 Agent 实战开发流程》单文件 HTML（含图示版）",
+  "why": "这个清单是从源文档数出来的结构基线。docforge 的校验器只看图形几何和文档结构，看不出正文被改写成散文或代码块丢了换行——所以这里把内容规模也钉住。",
+  "expected": {
+    "h1": 5,
+    "h2": 18,
+    "h3": 13,
+    "h4": 26,
+    "figures": 17,
+    "tables": 2,
+    "code_blocks": 15,
+    "code_languages": {
+      "text": 11,
+      "python": 4
+    }
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "id": "api",
+  "layout": "sequence",
+  "title": "后端 API 端到端时序",
+  "kind": "时序图",
+  "size": [
+    1240,
+    620
+  ],
+  "lanes": [
+    {
+      "id": "client",
+      "title": "客户端",
+      "sub": "Web / App"
+    },
+    {
+      "id": "api",
+      "title": "API 服务",
+      "sub": "鉴权 · 限流 · 幂等"
+    },
+    {
+      "id": "queue",
+      "title": "任务队列",
+      "sub": "持久化 job 队列"
+    },
+    {
+      "id": "worker",
+      "title": "Worker",
+      "sub": "受控并发"
+    },
+    {
+      "id": "graph",
+      "title": "LangGraph",
+      "sub": "图执行"
+    },
+    {
+      "id": "store",
+      "title": "存储",
+      "sub": "DB / Redis"
+    }
+  ],
+  "messages": [
+    {
+      "from": "client",
+      "to": "api",
+      "label": "POST /jobs（幂等键 · trace_id）"
+    },
+    {
+      "from": "api",
+      "to": "api",
+      "label": "鉴权 → 限流 → 参数校验",
+      "self": true
+    },
+    {
+      "from": "api",
+      "to": "queue",
+      "label": "写任务队列 status=queued",
+      "kind": "violet"
+    },
+    {
+      "from": "api",
+      "to": "client",
+      "label": "202 Accepted + job_id",
+      "dashed": true
+    },
+    {
+      "from": "queue",
+      "to": "worker",
+      "label": "领取任务（并发受控）",
+      "kind": "violet"
+    },
+    {
+      "from": "worker",
+      "to": "graph",
+      "label": "graph.astream(state)",
+      "kind": "teal"
+    },
+    {
+      "from": "graph",
+      "to": "graph",
+      "label": "路由 / 检索 / 工具 / 自省",
+      "self": true
+    },
+    {
+      "from": "graph",
+      "to": "store",
+      "label": "checkpointer 落盘",
+      "kind": "violet"
+    },
+    {
+      "from": "worker",
+      "to": "api",
+      "label": "SSE 事件流",
+      "kind": "teal",
+      "dashed": true
+    },
+    {
+      "from": "api",
+      "to": "client",
+      "label": "流式中间步骤 + 最终结果",
+      "kind": "teal",
+      "dashed": true
+    },
+    {
+      "from": "client",
+      "to": "api",
+      "label": "POST /jobs/{id}/approve",
+      "kind": "amber"
+    },
+    {
+      "from": "api",
+      "to": "graph",
+      "label": "恢复执行（interrupt 之后）",
+      "kind": "green"
+    }
+  ],
+  "activations": [
+    {
+      "lane": "api",
+      "from": 0,
+      "to": 3
+    },
+    {
+      "lane": "api",
+      "from": 10,
+      "to": 11
+    },
+    {
+      "lane": "queue",
+      "from": 2,
+      "to": 4
+    },
+    {
+      "lane": "worker",
+      "from": 4,
+      "to": 8
+    },
+    {
+      "lane": "graph",
+      "from": 5,
+      "to": 7
+    },
+    {
+      "lane": "graph",
+      "from": 11,
+      "to": 11
+    },
+    {
+      "lane": "store",
+      "from": 7,
+      "to": 7
+    }
+  ],
+  "options": {
+    "width": 1240,
+    "margin": 60,
+    "header_h": 52,
+    "step": 40,
+    "y": 20,
+    "first_gap": 44,
+    "tail": 40
+  }
+}

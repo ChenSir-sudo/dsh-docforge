@@ -1,0 +1,16 @@
+{
+  "id": "cycle",
+  "layout": "ring",
+  "title": "闭环",
+  "kind": "循环图",
+  "size": [1200, 520],
+  "nodes": [
+    {"id": "use", "title": "使用", "sub": ["产生行为"], "kind": "violet"},
+    {"id": "collect", "title": "收集", "sub": ["留下痕迹"], "kind": "teal"},
+    {"id": "label", "title": "标注", "sub": ["人工判断"], "kind": "teal"},
+    {"id": "learn", "title": "学习", "sub": ["更新能力"], "kind": "amber"},
+    {"id": "verify", "title": "验证", "sub": ["对比基线"], "kind": "indigo"},
+    {"id": "ship", "title": "上线", "sub": ["灰度放量"], "kind": "green"}
+  ],
+  "options": {}
+}

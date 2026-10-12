@@ -1,0 +1,94 @@
+/* ------------------------------------------------------------- svg classes */
+.dg text { font-family: var(--sans); }
+.dg .d-box       { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.4; }
+.dg .d-t         { fill: var(--ink); font-weight: 600; }
+.dg .d-s         { fill: var(--ink-3); }
+/* Identifiers inside a card. Mono + a shade darker than the caption
+   so the title, the caption and the contents read as three levels. */
+.dg .d-ci        { fill: var(--ink-2);
+                   font-family: var(--mono, ui-monospace, SFMono-Regular,
+                                Menlo, Consolas, monospace); }
+.dg .d-code      { fill: var(--ink); font-family: var(--mono); font-weight: 600; }
+.dg .d-el        { fill: var(--ink-3); font-weight: 500; }
+.dg .d-sec       { fill: var(--ink-2); font-weight: 700; letter-spacing: .02em; }
+.dg .d-num       { fill: var(--ink-4); font-weight: 700; font-family: var(--mono); }
+
+.dg .d-band      { fill: var(--surface-2); stroke: var(--line); stroke-width: 1.2; }
+.dg .d-band-t    { font-weight: 700; fill: var(--ink-2); }
+.dg .d-tag       { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.1; }
+.dg .d-tag-t     { fill: var(--ink-2); font-weight: 600; }
+
+/* -- kind colours: node boxes ------------------------------------------- */
+.dg .k-indigo .d-box { fill: var(--c-indigo-bg); stroke: var(--c-indigo); }
+.dg .k-indigo .d-t   { fill: var(--c-indigo-ink); }
+.dg .k-teal   .d-box { fill: var(--c-teal-bg);   stroke: var(--c-teal); }
+.dg .k-teal   .d-t   { fill: var(--c-teal-ink); }
+.dg .k-amber  .d-box { fill: var(--c-amber-bg);  stroke: var(--c-amber); }
+.dg .k-amber  .d-t   { fill: var(--c-amber-ink); }
+.dg .k-red    .d-box { fill: var(--c-red-bg);    stroke: var(--c-red); }
+.dg .k-red    .d-t   { fill: var(--c-red-ink); }
+.dg .k-green  .d-box { fill: var(--c-green-bg);  stroke: var(--c-green); }
+.dg .k-green  .d-t   { fill: var(--c-green-ink); }
+.dg .k-violet .d-box { fill: var(--c-violet-bg); stroke: var(--c-violet); }
+.dg .k-violet .d-t   { fill: var(--c-violet-ink); }
+.dg .k-slate  .d-box { fill: var(--c-slate-bg);  stroke: var(--c-slate); }
+.dg .k-slate  .d-t   { fill: var(--c-slate-ink); }
+.dg .k-ink    .d-box { fill: var(--c-ink-bg);    stroke: var(--c-ink); }
+.dg .k-ink    .d-t   { fill: var(--c-ink-ink); }
+
+.dg .d-band.b-indigo { fill: var(--c-indigo-bg); stroke: var(--c-indigo); }
+.dg .d-band.b-teal   { fill: var(--c-teal-bg);   stroke: var(--c-teal); }
+.dg .d-band.b-amber  { fill: var(--c-amber-bg);  stroke: var(--c-amber); }
+.dg .d-band.b-slate  { fill: var(--c-slate-bg);  stroke: var(--c-slate); }
+.dg .d-band.b-ink    { fill: var(--c-ink-bg);    stroke: var(--c-ink); }
+.dg .d-band.b-violet { fill: var(--c-violet-bg); stroke: var(--c-violet); }
+.dg .bt-indigo { fill: var(--c-indigo-ink); }
+.dg .bt-teal   { fill: var(--c-teal-ink); }
+.dg .bt-amber  { fill: var(--c-amber-ink); }
+.dg .bt-slate  { fill: var(--c-slate-ink); }
+.dg .bt-ink    { fill: var(--c-ink-ink); }
+.dg .bt-violet { fill: var(--c-violet-ink); }
+
+/* -- kind colours: edges ------------------------------------------------- */
+.dg .dg-e { stroke-width: 1.6; stroke-linecap: round; }
+.dg .dg-e.dash { stroke-dasharray: 6 5; }
+.dg .e-line   { stroke: var(--line-strong); }
+.dg .e-indigo { stroke: var(--c-indigo); }
+.dg .e-teal   { stroke: var(--c-teal); }
+.dg .e-amber  { stroke: var(--c-amber); }
+.dg .e-red    { stroke: var(--c-red); }
+.dg .e-green  { stroke: var(--c-green); }
+.dg .e-violet { stroke: var(--c-violet); }
+.dg .e-slate  { stroke: var(--c-slate); }
+.dg .e-ink    { stroke: var(--c-ink); }
+.dg .e-line-f   { fill: var(--line-strong); }
+.dg .e-indigo-f { fill: var(--c-indigo); }
+.dg .e-teal-f   { fill: var(--c-teal); }
+.dg .e-amber-f  { fill: var(--c-amber); }
+.dg .e-red-f    { fill: var(--c-red); }
+.dg .e-green-f  { fill: var(--c-green); }
+.dg .e-violet-f { fill: var(--c-violet); }
+.dg .e-slate-f  { fill: var(--c-slate); }
+.dg .e-ink-f    { fill: var(--c-ink); }
+
+.dg .ah-line   { fill: var(--line-strong); }
+.dg .ah-indigo { fill: var(--c-indigo); }
+.dg .ah-teal   { fill: var(--c-teal); }
+.dg .ah-amber  { fill: var(--c-amber); }
+.dg .ah-red    { fill: var(--c-red); }
+.dg .ah-green  { fill: var(--c-green); }
+.dg .ah-violet { fill: var(--c-violet); }
+.dg .ah-slate  { fill: var(--c-slate); }
+.dg .ah-ink    { fill: var(--c-ink); }
+
+/* ---- sequence / state / standalone extras ---- */
+.dg .d-card  { stroke-width: 1.1; }
+.dg .d-canvas { fill: var(--surface); }
+.dg .d-act   { fill: var(--surface-3); stroke: var(--line-strong); stroke-width: 1; }
+.dg .d-lane  { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.4; }
+.dg .d-life  { stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 4 6; }
+.dg .d-fig-t { fill: var(--ink); font-weight: 700; }
+.dg .d-hint  { fill: var(--ink-2); }
+.dg .d-sub   { fill: var(--ink-3); }
+.dg .d-errbox  { fill: var(--c-red-bg); stroke: var(--c-red); stroke-width: 1.4; }
+.dg .d-errtext { fill: var(--c-red); font-weight: 600; }

@@ -1,0 +1,21 @@
+{
+  "id": "flow",
+  "layout": "pipeline",
+  "title": "主流程",
+  "kind": "流程图",
+  "size": [1200, 220],
+  "nodes": [
+    {"id": "in", "title": "输入解析", "sub": ["raw input"]},
+    {"id": "cls", "title": "意图识别", "sub": ["LLM 结构化输出"], "kind": "indigo"},
+    {"id": "work", "title": "结果生成", "sub": ["draft_answer"], "kind": "indigo"},
+    {"id": "check", "title": "质量审查", "sub": ["四维评分"], "kind": "violet"},
+    {"id": "out", "title": "输出", "sub": ["final_answer"], "kind": "green"}
+  ],
+  "edges": [
+    {"from": "in", "to": "cls", "label": "解析"},
+    {"from": "cls", "to": "work"},
+    {"from": "work", "to": "check"},
+    {"from": "check", "to": "out", "label": "≥ 80"}
+  ],
+  "options": {"y": 60, "margin": 60}
+}

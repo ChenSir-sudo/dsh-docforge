@@ -1,0 +1,94 @@
+{
+  "id": "flywheel",
+  "layout": "ring",
+  "title": "数据飞轮",
+  "kind": "数据流图",
+  "size": [
+    1240,
+    520
+  ],
+  "nodes": [
+    {
+      "id": "fb",
+      "title": "人工反馈",
+      "sub": [
+        "通过 / 修正 / 拒绝"
+      ],
+      "kind": "violet"
+    },
+    {
+      "id": "set",
+      "title": "评估集",
+      "sub": [
+        "典型 · 边界 · 对抗"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "label",
+      "title": "标注",
+      "sub": [
+        "人工标注与对齐"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "ft",
+      "title": "微调 / 提示词优化",
+      "sub": [
+        "SFT · DPO"
+      ],
+      "kind": "amber"
+    },
+    {
+      "id": "reg",
+      "title": "回归评估",
+      "sub": [
+        "对比节点级指标"
+      ],
+      "kind": "indigo"
+    },
+    {
+      "id": "ship",
+      "title": "上线",
+      "sub": [
+        "灰度 · A/B 实验"
+      ],
+      "kind": "green"
+    },
+    {
+      "id": "core",
+      "title": "数据飞轮",
+      "sub": [
+        "越用越准"
+      ],
+      "kind": "slate"
+    }
+  ],
+  "options": {
+    "width": 1240,
+    "cx": 620,
+    "cy": 250,
+    "rx": 380,
+    "ry": 152,
+    "center": "core",
+    "gap_deg": 24,
+    "start_deg": -90,
+    "fs": 13.5,
+    "subfs": 10.5,
+    "allow_isolated": [
+      "core"
+    ]
+  },
+  "notes": [
+    {
+      "type": "text",
+      "x": 620,
+      "y": 496,
+      "anchor": "middle",
+      "cls": "d-sub",
+      "fs": 12,
+      "text": "只有基础模型在特定任务上表现明显不足时才引入微调；其余情况先用提示词与路由策略解决。"
+    }
+  ]
+}

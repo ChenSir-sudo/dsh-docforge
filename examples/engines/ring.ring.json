@@ -1,0 +1,61 @@
+{
+  "layout": "ring",
+  "title": "数据飞轮",
+  "kind": "循环图",
+  "size": [
+    1200,
+    540
+  ],
+  "nodes": [
+    {
+      "id": "a",
+      "title": "人工反馈",
+      "kind": "violet",
+      "sub": [
+        "通过 / 修正 / 拒绝"
+      ]
+    },
+    {
+      "id": "b",
+      "title": "评估集",
+      "kind": "teal",
+      "sub": [
+        "典型 · 边界 · 对抗"
+      ]
+    },
+    {
+      "id": "c",
+      "title": "标注",
+      "kind": "teal",
+      "sub": [
+        "人工对齐"
+      ]
+    },
+    {
+      "id": "d",
+      "title": "微调 / 提示词优化",
+      "kind": "amber",
+      "sub": [
+        "SFT · DPO"
+      ]
+    },
+    {
+      "id": "e",
+      "title": "回归评估",
+      "kind": "indigo",
+      "sub": [
+        "对比节点级指标"
+      ]
+    },
+    {
+      "id": "f",
+      "title": "上线",
+      "kind": "green",
+      "sub": [
+        "灰度 · A/B"
+      ]
+    }
+  ],
+  "options": {},
+  "id": "ring"
+}

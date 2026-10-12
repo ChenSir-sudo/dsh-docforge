@@ -1,0 +1,595 @@
+{
+  "id": "arch",
+  "layout": "free",
+  "title": "三层能力模型",
+  "kind": "架构图",
+  "size": [
+    1240,
+    700
+  ],
+  "nodes": [
+    {
+      "id": "rf1",
+      "title": "贯穿全流程",
+      "x": 62,
+      "y": 60,
+      "kind": "ink",
+      "fs": 13,
+      "width": 146,
+      "height": 30
+    },
+    {
+      "id": "rf2",
+      "title": "每个 State / 日志 /",
+      "x": 62,
+      "y": 96,
+      "sub": [
+        "审计都携带"
+      ],
+      "kind": "ink",
+      "fs": 10.5,
+      "subfs": 10,
+      "width": 146,
+      "height": 44
+    },
+    {
+      "id": "id-tenant_id",
+      "title": "tenant_id",
+      "x": 62,
+      "y": 148,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 146,
+      "height": 32
+    },
+    {
+      "id": "id-user_id",
+      "title": "user_id",
+      "x": 62,
+      "y": 186,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 146,
+      "height": 32
+    },
+    {
+      "id": "id-session_id",
+      "title": "session_id",
+      "x": 62,
+      "y": 224,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 146,
+      "height": 32
+    },
+    {
+      "id": "id-job_id",
+      "title": "job_id",
+      "x": 62,
+      "y": 262,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 146,
+      "height": 32
+    },
+    {
+      "id": "id-trace_id",
+      "title": "trace_id",
+      "x": 62,
+      "y": 300,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 146,
+      "height": 32
+    },
+    {
+      "id": "rf3",
+      "title": "用来做什么",
+      "x": 62,
+      "y": 362,
+      "kind": "ink",
+      "fs": 12,
+      "width": 146,
+      "height": 30
+    },
+    {
+      "id": "k1",
+      "title": "状态 State",
+      "x": 218,
+      "y": 134,
+      "sub": [
+        "AgentState"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 11,
+      "width": 126,
+      "height": 92
+    },
+    {
+      "id": "k2",
+      "title": "图 Graph",
+      "x": 372,
+      "y": 134,
+      "sub": [
+        "StateGraph"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 11,
+      "width": 126,
+      "height": 92
+    },
+    {
+      "id": "k3",
+      "title": "路由 Router",
+      "x": 526,
+      "y": 134,
+      "sub": [
+        "条件边 / 兜底"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 11,
+      "width": 126,
+      "height": 92
+    },
+    {
+      "id": "k4",
+      "title": "知识 RAG",
+      "x": 680,
+      "y": 134,
+      "sub": [
+        "检索 / 重写"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 11,
+      "width": 126,
+      "height": 92
+    },
+    {
+      "id": "k5",
+      "title": "工具 Tools",
+      "x": 834,
+      "y": 134,
+      "sub": [
+        "MCP · API · CLI"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 11,
+      "width": 126,
+      "height": 92
+    },
+    {
+      "id": "k6",
+      "title": "自省 Reflect",
+      "x": 988,
+      "y": 134,
+      "sub": [
+        "评分 / 迭代"
+      ],
+      "kind": "indigo",
+      "fs": 14.5,
+      "subfs": 11,
+      "width": 126,
+      "height": 92
+    },
+    {
+      "id": "s1",
+      "title": "后端 API",
+      "x": 214,
+      "y": 338,
+      "sub": [
+        "提交 / 流式 / 审批"
+      ],
+      "kind": "teal",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 176,
+      "height": 88
+    },
+    {
+      "id": "s2",
+      "title": "数据底座",
+      "x": 412,
+      "y": 338,
+      "sub": [
+        "业务库 · 向量库 · 缓存"
+      ],
+      "kind": "teal",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 176,
+      "height": 88
+    },
+    {
+      "id": "s3",
+      "title": "队列编排",
+      "x": 610,
+      "y": 338,
+      "sub": [
+        "任务队列 · Worker"
+      ],
+      "kind": "teal",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 176,
+      "height": 88
+    },
+    {
+      "id": "s4",
+      "title": "前端交互",
+      "x": 808,
+      "y": 338,
+      "sub": [
+        "过程可见 · 可介入"
+      ],
+      "kind": "teal",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 176,
+      "height": 88
+    },
+    {
+      "id": "s5",
+      "title": "人工闭环",
+      "x": 1006,
+      "y": 338,
+      "sub": [
+        "审批 · 修正 · 反馈"
+      ],
+      "kind": "teal",
+      "fs": 14.5,
+      "subfs": 10.5,
+      "width": 176,
+      "height": 88
+    },
+    {
+      "id": "o1",
+      "title": "安全 · 权限 · 审计",
+      "x": 218,
+      "y": 538,
+      "sub": [
+        "越权拦截 · 租户隔离"
+      ],
+      "kind": "amber",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 218,
+      "height": 84
+    },
+    {
+      "id": "o2",
+      "title": "评估 · CI 门禁",
+      "x": 462,
+      "y": 538,
+      "sub": [
+        "指标基线 · 防退化"
+      ],
+      "kind": "amber",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 218,
+      "height": 84
+    },
+    {
+      "id": "o3",
+      "title": "部署 · 可观测",
+      "x": 706,
+      "y": 538,
+      "sub": [
+        "轨迹 · 指标 · 告警"
+      ],
+      "kind": "amber",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 218,
+      "height": 84
+    },
+    {
+      "id": "o4",
+      "title": "成本 · 灰度 · 回滚",
+      "x": 950,
+      "y": 538,
+      "sub": [
+        "Token 预算 · 版本切换"
+      ],
+      "kind": "amber",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 218,
+      "height": 84
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          224,
+          336
+        ],
+        [
+          188,
+          336
+        ]
+      ],
+      "kind": "slate",
+      "dashed": true
+    },
+    {
+      "pts": [
+        [
+          224,
+          498
+        ],
+        [
+          188,
+          498
+        ]
+      ],
+      "kind": "slate",
+      "dashed": true
+    },
+    {
+      "pts": [
+        [
+          348,
+          180.0
+        ],
+        [
+          368,
+          180.0
+        ]
+      ],
+      "kind": "indigo",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          502,
+          180.0
+        ],
+        [
+          522,
+          180.0
+        ]
+      ],
+      "kind": "indigo",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          656,
+          180.0
+        ],
+        [
+          676,
+          180.0
+        ]
+      ],
+      "kind": "indigo",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          810,
+          180.0
+        ],
+        [
+          830,
+          180.0
+        ]
+      ],
+      "kind": "indigo",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          964,
+          180.0
+        ],
+        [
+          984,
+          180.0
+        ]
+      ],
+      "kind": "indigo",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          394,
+          382.0
+        ],
+        [
+          408,
+          382.0
+        ]
+      ],
+      "kind": "teal",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          592,
+          382.0
+        ],
+        [
+          606,
+          382.0
+        ]
+      ],
+      "kind": "teal",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          790,
+          382.0
+        ],
+        [
+          804,
+          382.0
+        ]
+      ],
+      "kind": "teal",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          988,
+          382.0
+        ],
+        [
+          1002,
+          382.0
+        ]
+      ],
+      "kind": "teal",
+      "r": 6
+    },
+    {
+      "pts": [
+        [
+          896,
+          280
+        ],
+        [
+          896,
+          256
+        ]
+      ],
+      "kind": "teal",
+      "label": "调用 / 驱动内核",
+      "lx": 908,
+      "ly": 264,
+      "anchor": "start"
+    },
+    {
+      "pts": [
+        [
+          896,
+          480
+        ],
+        [
+          896,
+          446
+        ]
+      ],
+      "kind": "amber",
+      "label": "横切约束",
+      "lx": 908,
+      "ly": 464,
+      "anchor": "start",
+      "dashed": true
+    }
+  ],
+  "bands": [
+    {
+      "x": 196,
+      "y": 56,
+      "w": 970,
+      "h": 200,
+      "kind": "indigo",
+      "rx": 16.0,
+      "label": "Agent 内核层",
+      "sub": "状态 → 图 → 路由 → 知识 → 工具 → 自省"
+    },
+    {
+      "x": 196,
+      "y": 280,
+      "w": 970,
+      "h": 166,
+      "kind": "teal",
+      "rx": 16.0,
+      "label": "产品外壳层",
+      "sub": "把图从脚本变成可运营的服务"
+    },
+    {
+      "x": 196,
+      "y": 480,
+      "w": 970,
+      "h": 170,
+      "kind": "amber",
+      "rx": 16.0,
+      "label": "工程运维层（横切所有层）"
+    }
+  ],
+  "notes": [
+    {
+      "type": "text",
+      "x": 66,
+      "y": 404,
+      "text": "· 多租户数据隔离",
+      "cls": "d-s",
+      "fs": 11,
+      "anchor": "start"
+    },
+    {
+      "type": "text",
+      "x": 66,
+      "y": 424,
+      "text": "· 工具级权限校验",
+      "cls": "d-s",
+      "fs": 11,
+      "anchor": "start"
+    },
+    {
+      "type": "text",
+      "x": 66,
+      "y": 444,
+      "text": "· 全链路追踪定位",
+      "cls": "d-s",
+      "fs": 11,
+      "anchor": "start"
+    },
+    {
+      "type": "text",
+      "x": 66,
+      "y": 464,
+      "text": "· Token 计费与配额",
+      "cls": "d-s",
+      "fs": 11,
+      "anchor": "start"
+    },
+    {
+      "type": "legend",
+      "x": 218,
+      "y": 672,
+      "entries": [
+        [
+          "indigo",
+          "Agent 内核层"
+        ],
+        [
+          "teal",
+          "产品外壳层"
+        ],
+        [
+          "amber",
+          "工程运维层"
+        ],
+        [
+          "ink",
+          "贯穿标识"
+        ]
+      ],
+      "fs": 11.5
+    }
+  ],
+  "options": {
+    "allow_isolated": true,
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

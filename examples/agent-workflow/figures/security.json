@@ -1,0 +1,282 @@
+{
+  "id": "security",
+  "layout": "free",
+  "title": "安全与多租户纵深防御",
+  "kind": "架构图",
+  "size": [
+    1240,
+    476
+  ],
+  "nodes": [
+    {
+      "id": "entry",
+      "title": "请求入口",
+      "x": 50,
+      "y": 60,
+      "sub": [
+        "外部流量"
+      ],
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 92.0,
+      "height": 88
+    },
+    {
+      "id": "auth",
+      "title": "认证",
+      "x": 230,
+      "y": 60,
+      "sub": [
+        "JWT / OAuth / API Key"
+      ],
+      "kind": "slate",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 190,
+      "height": 88
+    },
+    {
+      "id": "authz",
+      "title": "授权",
+      "x": 440,
+      "y": 60,
+      "sub": [
+        "RBAC · 租户 · 工具级"
+      ],
+      "kind": "slate",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 190,
+      "height": 88
+    },
+    {
+      "id": "iso",
+      "title": "数据隔离",
+      "x": 670,
+      "y": 60,
+      "sub": [
+        "库 / 向量 / 对象 / 队列"
+      ],
+      "kind": "slate",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 190,
+      "height": 88
+    },
+    {
+      "id": "agent",
+      "title": "Agent 执行",
+      "x": 900,
+      "y": 60,
+      "sub": [
+        "图 · 工具 · 模型"
+      ],
+      "kind": "indigo",
+      "fs": 14,
+      "subfs": 10.5,
+      "width": 210,
+      "height": 88
+    },
+    {
+      "id": "c1",
+      "title": "提示注入防护",
+      "x": 48,
+      "y": 340,
+      "sub": [
+        "输入过滤 · 系统提示加固 · 输出校验"
+      ],
+      "kind": "slate",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 284,
+      "height": 84
+    },
+    {
+      "id": "c2",
+      "title": "PII 脱敏",
+      "x": 344,
+      "y": 340,
+      "sub": [
+        "日志、轨迹、审计中一律脱敏"
+      ],
+      "kind": "slate",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 284,
+      "height": 84
+    },
+    {
+      "id": "c3",
+      "title": "沙箱执行",
+      "x": 640,
+      "y": 340,
+      "sub": [
+        "CLI / 代码执行类工具在沙箱中运行"
+      ],
+      "kind": "slate",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 284,
+      "height": 84
+    },
+    {
+      "id": "c4",
+      "title": "密钥管理",
+      "x": 936,
+      "y": 340,
+      "sub": [
+        "环境变量或密钥服务，禁止硬编码"
+      ],
+      "kind": "slate",
+      "fs": 13.5,
+      "subfs": 10.5,
+      "width": 284,
+      "height": 84
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          190,
+          104
+        ],
+        [
+          226,
+          104
+        ]
+      ],
+      "kind": "line",
+      "from": "entry",
+      "to": "auth"
+    },
+    {
+      "pts": [
+        [
+          420,
+          104
+        ],
+        [
+          436,
+          104
+        ]
+      ],
+      "kind": "line",
+      "from": "auth",
+      "to": "authz"
+    },
+    {
+      "pts": [
+        [
+          630,
+          104
+        ],
+        [
+          666,
+          104
+        ]
+      ],
+      "kind": "line",
+      "from": "authz",
+      "to": "iso"
+    },
+    {
+      "pts": [
+        [
+          860,
+          104
+        ],
+        [
+          896,
+          104
+        ]
+      ],
+      "kind": "line",
+      "from": "iso",
+      "to": "agent"
+    },
+    {
+      "pts": [
+        [
+          290,
+          148
+        ],
+        [
+          290,
+          224
+        ]
+      ],
+      "kind": "red",
+      "dashed": true
+    },
+    {
+      "pts": [
+        [
+          500,
+          148
+        ],
+        [
+          500,
+          224
+        ]
+      ],
+      "kind": "red",
+      "dashed": true
+    },
+    {
+      "pts": [
+        [
+          730,
+          148
+        ],
+        [
+          730,
+          224
+        ]
+      ],
+      "kind": "red",
+      "dashed": true
+    }
+  ],
+  "bands": [
+    {
+      "x": 36,
+      "y": 296,
+      "w": 1168,
+      "h": 158,
+      "kind": "slate",
+      "rx": 16.0,
+      "label": "配套措施"
+    }
+  ],
+  "notes": [
+    {
+      "type": "hline",
+      "x": 130,
+      "y": 224,
+      "x2": 1010,
+      "kind": "red",
+      "dashed": false,
+      "opacity": 1.0
+    },
+    {
+      "type": "text",
+      "x": 130,
+      "y": 248,
+      "text": "越权 / 未认证 / 跨租户访问 → 当场拦截，并写入 audit_logs",
+      "cls": "d-sub",
+      "fs": 12,
+      "anchor": "start"
+    }
+  ],
+  "options": {
+    "allow_isolated": [
+      "c1",
+      "c2",
+      "c3",
+      "c4"
+    ],
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

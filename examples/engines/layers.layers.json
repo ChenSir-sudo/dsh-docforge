@@ -1,0 +1,93 @@
+{
+  "layout": "layers",
+  "title": "分层架构",
+  "kind": "架构图",
+  "nodes": [
+    {
+      "id": "s",
+      "title": "状态",
+      "kind": "indigo",
+      "sub": [
+        "AgentState"
+      ]
+    },
+    {
+      "id": "g",
+      "title": "图",
+      "kind": "indigo",
+      "sub": [
+        "StateGraph"
+      ]
+    },
+    {
+      "id": "r",
+      "title": "路由",
+      "kind": "indigo",
+      "sub": [
+        "条件边 + 兜底"
+      ]
+    },
+    {
+      "id": "api",
+      "title": "后端 API",
+      "kind": "teal",
+      "sub": [
+        "提交 / 流式"
+      ]
+    },
+    {
+      "id": "db",
+      "title": "数据底座",
+      "kind": "teal",
+      "sub": [
+        "库 / 向量"
+      ]
+    },
+    {
+      "id": "sec",
+      "title": "安全与权限",
+      "kind": "amber",
+      "sub": [
+        "租户隔离"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "label": "内核层",
+      "sub": "怎么想",
+      "kind": "indigo",
+      "nodes": [
+        "s",
+        "g",
+        "r"
+      ]
+    },
+    {
+      "label": "外壳层",
+      "sub": "怎么用",
+      "kind": "teal",
+      "nodes": [
+        "api",
+        "db"
+      ]
+    },
+    {
+      "label": "运维层",
+      "sub": "怎么管",
+      "kind": "amber",
+      "nodes": [
+        "sec"
+      ]
+    }
+  ],
+  "options": {
+    "margin": 36,
+    "label_h": 46,
+    "band_gap": 34,
+    "allow_isolated": [
+      "sec"
+    ]
+  },
+  "id": "layers"
+}

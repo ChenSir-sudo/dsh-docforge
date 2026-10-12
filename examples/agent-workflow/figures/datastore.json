@@ -1,0 +1,214 @@
+{
+  "id": "datastore",
+  "layout": "free",
+  "title": "数据底座",
+  "kind": "架构图",
+  "size": [
+    1400,
+    500
+  ],
+  "nodes": [
+    {
+      "id": "api",
+      "title": "API 服务",
+      "sub": [
+        "读写业务数据"
+      ],
+      "kind": "teal",
+      "x": 95,
+      "y": 30,
+      "width": 320,
+      "height": 76
+    },
+    {
+      "id": "worker",
+      "title": "Worker 服务",
+      "sub": [
+        "执行图 · 落盘"
+      ],
+      "kind": "teal",
+      "x": 540,
+      "y": 30,
+      "width": 320,
+      "height": 76
+    },
+    {
+      "id": "sched",
+      "title": "Scheduler",
+      "sub": [
+        "重试 · 补偿"
+      ],
+      "kind": "teal",
+      "x": 985,
+      "y": 30,
+      "width": 320,
+      "height": 76
+    },
+    {
+      "id": "rel",
+      "title": "关系库",
+      "sub": "PostgreSQL / MySQL",
+      "items": [
+        "users / tenants / roles",
+        "permissions / sessions",
+        "jobs / job_steps / messages",
+        "tool_calls / artifacts",
+        "evaluations / audit_logs",
+        "configs / model_versions"
+      ],
+      "kind": "violet",
+      "as_card": true,
+      "fs": 14,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 21,
+      "pad": 14,
+      "x": 60,
+      "y": 186,
+      "width": 250
+    },
+    {
+      "id": "vec",
+      "title": "向量库",
+      "sub": "pgvector / Milvus / Qdrant",
+      "items": [
+        "collections",
+        "documents",
+        "chunks",
+        "embeddings"
+      ],
+      "kind": "violet",
+      "as_card": true,
+      "fs": 14,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 21,
+      "pad": 14,
+      "x": 325,
+      "y": 186,
+      "width": 250
+    },
+    {
+      "id": "cache",
+      "title": "缓存",
+      "sub": "Redis",
+      "items": [
+        "会话缓存",
+        "限流计数",
+        "分布式锁",
+        "短期状态 / embedding 缓存"
+      ],
+      "kind": "amber",
+      "as_card": true,
+      "fs": 14,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 21,
+      "pad": 14,
+      "x": 590,
+      "y": 186,
+      "width": 250
+    },
+    {
+      "id": "obj",
+      "title": "对象存储",
+      "sub": "S3 / MinIO / OSS",
+      "items": [
+        "上传文件",
+        "中间产物",
+        "导出结果",
+        "附件"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "fs": 14,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 21,
+      "pad": 14,
+      "x": 855,
+      "y": 186,
+      "width": 250
+    },
+    {
+      "id": "ckpt",
+      "title": "checkpointer",
+      "sub": "PostgreSQL / Redis",
+      "items": [
+        "断点续接",
+        "跨会话恢复",
+        "人工审批后恢复",
+        "从内存切换到外部存储"
+      ],
+      "kind": "indigo",
+      "as_card": true,
+      "fs": 14,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 21,
+      "pad": 14,
+      "x": 1120,
+      "y": 186,
+      "width": 235
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          255,
+          108
+        ],
+        [
+          255,
+          186
+        ]
+      ],
+      "kind": "violet",
+      "dashed": true
+    },
+    {
+      "pts": [
+        [
+          700,
+          108
+        ],
+        [
+          700,
+          186
+        ]
+      ],
+      "kind": "violet",
+      "dashed": true
+    },
+    {
+      "pts": [
+        [
+          1145,
+          108
+        ],
+        [
+          1145,
+          186
+        ]
+      ],
+      "kind": "violet",
+      "dashed": true
+    }
+  ],
+  "notes": [
+    {
+      "type": "text",
+      "x": 48,
+      "y": 468,
+      "cls": "d-sub",
+      "fs": 12,
+      "text": "验收：业务数据可持久化 · 向量检索可用 · 缓存命中率可观测 · 文件可上传下载 · checkpointer 可从内存切换到外部存储"
+    }
+  ],
+  "options": {
+    "allow_isolated": true,
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "id": "deploy",
+  "layout": "layers",
+  "title": "部署拓扑与可观测",
+  "kind": "架构图",
+  "size": [
+    1240,
+    720
+  ],
+  "nodes": [
+    {
+      "id": "ingress",
+      "title": "负载均衡 / Ingress",
+      "sub": [
+        "TLS · 限流 · 路由"
+      ],
+      "kind": "slate"
+    },
+    {
+      "id": "api",
+      "title": "API 服务",
+      "sub": [
+        "无状态 · 可水平扩展"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "worker",
+      "title": "Worker 服务",
+      "sub": [
+        "消费任务 · 执行图"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "sched",
+      "title": "Scheduler",
+      "sub": [
+        "定时 · 重试 · 补偿"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "web",
+      "title": "前端",
+      "sub": [
+        "静态资源 · 同源部署"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "pg",
+      "title": "PostgreSQL",
+      "sub": [
+        "业务库 + checkpointer"
+      ],
+      "kind": "violet"
+    },
+    {
+      "id": "redis",
+      "title": "Redis",
+      "sub": [
+        "缓存 · 限流 · 分布式锁"
+      ],
+      "kind": "violet"
+    },
+    {
+      "id": "vec",
+      "title": "向量库",
+      "sub": [
+        "pgvector / Milvus"
+      ],
+      "kind": "violet"
+    },
+    {
+      "id": "obj",
+      "title": "对象存储",
+      "sub": [
+        "S3 / MinIO / OSS"
+      ],
+      "kind": "violet"
+    },
+    {
+      "id": "trace",
+      "title": "运行轨迹",
+      "kind": "amber"
+    },
+    {
+      "id": "cost",
+      "title": "Token 成本",
+      "kind": "amber"
+    },
+    {
+      "id": "p95",
+      "title": "P95 延迟",
+      "kind": "amber"
+    },
+    {
+      "id": "ok",
+      "title": "成功率",
+      "kind": "amber"
+    },
+    {
+      "id": "tool",
+      "title": "工具失败率",
+      "kind": "amber"
+    },
+    {
+      "id": "lag",
+      "title": "队列积压",
+      "kind": "amber"
+    }
+  ],
+  "groups": [
+    {
+      "label": "入口与无状态服务",
+      "sub": "容器化：API / Worker / Scheduler / 前端各自独立镜像",
+      "kind": "slate",
+      "nodes": [
+        "ingress",
+        "api",
+        "worker",
+        "sched",
+        "web"
+      ],
+      "cols": 3,
+      "chain": false
+    },
+    {
+      "label": "数据与存储",
+      "sub": "全部外部化，服务本身无状态",
+      "kind": "violet",
+      "nodes": [
+        "pg",
+        "redis",
+        "vec",
+        "obj"
+      ],
+      "cols": 2,
+      "chain": false
+    },
+    {
+      "label": "可观测与告警",
+      "sub": "所有服务统一上报轨迹、指标、日志",
+      "kind": "amber",
+      "nodes": [
+        "trace",
+        "cost",
+        "p95",
+        "ok",
+        "tool",
+        "lag"
+      ],
+      "cols": 3,
+      "chain": false
+    }
+  ],
+  "options": {
+    "width": 1240,
+    "margin": 36,
+    "inner_pad": 20,
+    "band_gap": 30,
+    "label_h": 46,
+    "gap_x": 18,
+    "row_gap": 16,
+    "fs": 14.5,
+    "subfs": 10.5,
+    "allow_isolated": [
+      "ingress",
+      "api",
+      "worker",
+      "sched",
+      "web",
+      "pg",
+      "redis",
+      "vec",
+      "obj",
+      "trace",
+      "cost",
+      "p95",
+      "ok",
+      "tool",
+      "lag"
+    ]
+  },
+  "notes": [
+    {
+      "type": "text",
+      "x": 36,
+      "y": 704,
+      "cls": "d-sub",
+      "fs": 12,
+      "text": "高频场景：Kubernetes + Helm 自动扩缩容；低频场景：Serverless，但状态持久化必须依赖外部 Redis / PostgreSQL。"
+    }
+  ]
+}

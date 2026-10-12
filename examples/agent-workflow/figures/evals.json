@@ -1,0 +1,461 @@
+{
+  "id": "evals",
+  "layout": "free",
+  "title": "三层评估与 CI 门禁",
+  "kind": "流程图",
+  "size": [
+    1220,
+    790
+  ],
+  "nodes": [
+    {
+      "id": "c1",
+      "title": "① 节点级评估",
+      "x": 56,
+      "y": 52,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 112.2,
+      "height": 28
+    },
+    {
+      "id": "g1",
+      "title": "意图分类准确率",
+      "x": 50,
+      "y": 88,
+      "sub": [
+        "路由是否走对分支"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 65.5
+    },
+    {
+      "id": "g2",
+      "title": "检索召回率",
+      "x": 340,
+      "y": 88,
+      "sub": [
+        "该召回的是否都回来了"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 65.5
+    },
+    {
+      "id": "g3",
+      "title": "工具调用成功率",
+      "x": 630,
+      "y": 88,
+      "sub": [
+        "含超时与降级路径"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 65.5
+    },
+    {
+      "id": "g4",
+      "title": "自省评分合理性",
+      "x": 920,
+      "y": 88,
+      "sub": [
+        "评分与人评是否一致"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 65.5
+    },
+    {
+      "id": "c2",
+      "title": "② 端到端评估",
+      "x": 56,
+      "y": 250,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 112.2,
+      "height": 28
+    },
+    {
+      "id": "g5",
+      "title": "典型场景",
+      "x": 50,
+      "y": 286,
+      "sub": [
+        "主流程能否走通"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [
+        "基准任务集",
+        "全链路通过"
+      ],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 105.5
+    },
+    {
+      "id": "g6",
+      "title": "边界场景",
+      "x": 340,
+      "y": 286,
+      "sub": [
+        "空检索 / 超时 / 超限"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 65.5
+    },
+    {
+      "id": "g7",
+      "title": "对抗场景",
+      "x": 630,
+      "y": 286,
+      "sub": [
+        "提示注入 · 越权尝试"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 65.5
+    },
+    {
+      "id": "g8",
+      "title": "任务完成率",
+      "x": 920,
+      "y": 286,
+      "sub": [
+        "评估完整轨迹而非终句"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 280,
+      "height": 65.5
+    },
+    {
+      "id": "c3",
+      "title": "③ CI 门禁",
+      "x": 56,
+      "y": 444,
+      "kind": "ink",
+      "fs": 12.5,
+      "width": 95.4,
+      "height": 28
+    },
+    {
+      "id": "ref",
+      "title": "图结构 / 提示词变更",
+      "x": 40,
+      "y": 480,
+      "fs": 13,
+      "width": 240,
+      "height": 58
+    },
+    {
+      "id": "run",
+      "title": "自动运行评估集",
+      "x": 320,
+      "y": 480,
+      "kind": "indigo",
+      "fs": 13,
+      "width": 210,
+      "height": 58
+    },
+    {
+      "id": "cmp",
+      "title": "对比指标基线",
+      "x": 560,
+      "y": 480,
+      "kind": "indigo",
+      "fs": 13,
+      "width": 200,
+      "height": 58
+    },
+    {
+      "id": "pass",
+      "title": "通过 → 允许合并",
+      "x": 860,
+      "y": 480,
+      "kind": "green",
+      "fs": 13,
+      "width": 210,
+      "height": 58
+    },
+    {
+      "id": "fail",
+      "title": "低于基线 → 阻止合并",
+      "x": 860,
+      "y": 548,
+      "kind": "red",
+      "fs": 13,
+      "width": 210,
+      "height": 58
+    },
+    {
+      "id": "sft",
+      "title": "格式不稳定、结构不一致",
+      "x": 50,
+      "y": 648,
+      "sub": [
+        "→ SFT"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [
+        "输出结构对齐"
+      ],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 290,
+      "height": 85.5
+    },
+    {
+      "id": "dpo",
+      "title": "判断类任务表现不佳",
+      "x": 340,
+      "y": 648,
+      "sub": [
+        "→ DPO"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [
+        "偏好对齐"
+      ],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 290,
+      "height": 85.5
+    },
+    {
+      "id": "rerun",
+      "title": "微调后必须重新跑评估",
+      "x": 630,
+      "y": 648,
+      "sub": [
+        "对比节点级指标"
+      ],
+      "kind": "teal",
+      "as_card": true,
+      "items": [
+        "防退化"
+      ],
+      "fs": 13,
+      "subfs": 10.5,
+      "ifs": 10.5,
+      "gap": 20,
+      "pad": 13,
+      "width": 290,
+      "height": 85.5
+    }
+  ],
+  "connectors": [
+    {
+      "pts": [
+        [
+          280,
+          509
+        ],
+        [
+          316,
+          509
+        ]
+      ],
+      "kind": "line",
+      "from": "ref",
+      "to": "run"
+    },
+    {
+      "pts": [
+        [
+          530,
+          509
+        ],
+        [
+          556,
+          509
+        ]
+      ],
+      "kind": "line",
+      "from": "run",
+      "to": "cmp"
+    },
+    {
+      "pts": [
+        [
+          760,
+          509
+        ],
+        [
+          790,
+          509
+        ],
+        [
+          790,
+          491
+        ],
+        [
+          856,
+          491
+        ]
+      ],
+      "kind": "green",
+      "from": "cmp",
+      "to": "pass"
+    },
+    {
+      "pts": [
+        [
+          760,
+          509
+        ],
+        [
+          790,
+          509
+        ],
+        [
+          790,
+          577
+        ],
+        [
+          856,
+          577
+        ]
+      ],
+      "kind": "red",
+      "from": "cmp",
+      "to": "fail"
+    }
+  ],
+  "bands": [
+    {
+      "x": 36,
+      "y": 36,
+      "w": 1168,
+      "h": 158,
+      "kind": "teal",
+      "rx": 16.0
+    },
+    {
+      "x": 36,
+      "y": 234,
+      "w": 1168,
+      "h": 158,
+      "kind": "teal",
+      "rx": 16.0
+    },
+    {
+      "x": 36,
+      "y": 428,
+      "w": 1168,
+      "h": 196,
+      "kind": "violet",
+      "rx": 16.0
+    },
+    {
+      "x": 36,
+      "y": 648,
+      "w": 1168,
+      "h": 130,
+      "kind": "teal",
+      "rx": 16.0
+    }
+  ],
+  "notes": [
+    {
+      "type": "text",
+      "x": 46,
+      "y": 630,
+      "text": "按需微调分支（基础模型明显不足时才引入）",
+      "cls": "d-band-t bt-teal",
+      "fs": 12,
+      "anchor": "start"
+    },
+    {
+      "type": "text",
+      "x": 50,
+      "y": 762,
+      "text": "核心指标必须留下基线记录：变更后能自动检测性能退化；低于基线则阻止合并。",
+      "cls": "d-sub",
+      "fs": 12,
+      "anchor": "start"
+    }
+  ],
+  "options": {
+    "allow_isolated": [
+      "c1",
+      "c2",
+      "c3",
+      "g1",
+      "g2",
+      "g3",
+      "g4",
+      "g5",
+      "g6",
+      "g7",
+      "g8",
+      "sft",
+      "dpo",
+      "rerun"
+    ],
+    "fs": 15,
+    "subfs": 11.5
+  }
+}

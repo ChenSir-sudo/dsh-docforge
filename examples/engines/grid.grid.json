@@ -1,0 +1,59 @@
+{
+  "layout": "grid",
+  "title": "指标卡",
+  "kind": "指标卡",
+  "nodes": [
+    {
+      "id": "k1",
+      "as_card": true,
+      "title": "任务完成率",
+      "sub": "较上期",
+      "accent": "92%",
+      "items": [
+        "上期 87%",
+        "目标 90%"
+      ]
+    },
+    {
+      "id": "k2",
+      "as_card": true,
+      "title": "P95 延迟",
+      "sub": "端到端",
+      "accent": "3.4s",
+      "items": [
+        "上期 4.1s",
+        "目标 3.5s"
+      ]
+    },
+    {
+      "id": "k3",
+      "as_card": true,
+      "title": "单任务成本",
+      "sub": "Token 计费",
+      "accent": "¥0.42",
+      "items": [
+        "上期 ¥0.55",
+        "目标 ¥0.45"
+      ]
+    },
+    {
+      "id": "k4",
+      "as_card": true,
+      "title": "工具失败率",
+      "sub": "含降级",
+      "accent": "1.8%",
+      "items": [
+        "上期 3.2%",
+        "目标 2.0%"
+      ]
+    }
+  ],
+  "options": {
+    "cols": 4,
+    "margin": 40,
+    "y": 24,
+    "as_card": true,
+    "allow_isolated": true
+  },
+  "id": "grid"
+}

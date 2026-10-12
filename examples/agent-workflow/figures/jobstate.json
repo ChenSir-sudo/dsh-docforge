@@ -1,0 +1,282 @@
+{
+  "id": "jobstate",
+  "layout": "state",
+  "title": "任务生命周期状态机",
+  "kind": "状态图",
+  "size": [
+    1240,
+    570
+  ],
+  "nodes": [
+    {
+      "id": "pending",
+      "title": "pending",
+      "sub": [
+        "已入队"
+      ],
+      "kind": "slate",
+      "fs": 13.5,
+      "subfs": 10.5
+    },
+    {
+      "id": "running",
+      "title": "running",
+      "sub": [
+        "Worker 执行中"
+      ],
+      "kind": "indigo",
+      "fs": 13.5,
+      "subfs": 10.5
+    },
+    {
+      "id": "succeeded",
+      "title": "succeeded",
+      "sub": [
+        "终态"
+      ],
+      "kind": "green",
+      "fs": 13.5,
+      "subfs": 10.5
+    },
+    {
+      "id": "cancelled",
+      "title": "cancelled",
+      "sub": [
+        "终态"
+      ],
+      "kind": "slate",
+      "fs": 13.5,
+      "subfs": 10.5
+    },
+    {
+      "id": "approval",
+      "title": "waiting_approval",
+      "sub": [
+        "checkpointer 挂起"
+      ],
+      "kind": "amber",
+      "fs": 13.5,
+      "subfs": 10.5
+    },
+    {
+      "id": "failed",
+      "title": "failed",
+      "sub": [
+        "可重试"
+      ],
+      "kind": "red",
+      "fs": 13.5,
+      "subfs": 10.5
+    },
+    {
+      "id": "dead",
+      "title": "dead_letter",
+      "sub": [
+        "终态"
+      ],
+      "kind": "red",
+      "fs": 13.5,
+      "subfs": 10.5
+    }
+  ],
+  "rows": [
+    [
+      "pending",
+      "running",
+      "succeeded"
+    ],
+    [
+      "cancelled",
+      "approval",
+      "failed"
+    ],
+    [
+      "dead"
+    ]
+  ],
+  "transitions": [
+    {
+      "from": "pending",
+      "to": "running",
+      "label": "claim",
+      "lx": 400,
+      "ly": 86
+    },
+    {
+      "from": "running",
+      "to": "succeeded",
+      "label": "完成",
+      "lx": 823,
+      "ly": 132
+    },
+    {
+      "from": "running",
+      "to": "approval",
+      "label": "requires_approval",
+      "kind": "amber",
+      "lx": 640,
+      "ly": 250
+    },
+    {
+      "from": "approval",
+      "to": "succeeded",
+      "label": "approved",
+      "kind": "green",
+      "lx": 950,
+      "ly": 110,
+      "pts": [
+        [
+          697,
+          196
+        ],
+        [
+          1000,
+          196
+        ],
+        [
+          1000,
+          125
+        ],
+        [
+          1150,
+          125
+        ],
+        [
+          1150,
+          104
+        ]
+      ],
+      "anchor": "middle"
+    },
+    {
+      "from": "approval",
+      "to": "failed",
+      "label": "rejected",
+      "kind": "red",
+      "lx": 933,
+      "ly": 250
+    },
+    {
+      "from": "running",
+      "to": "failed",
+      "label": "执行失败",
+      "kind": "red",
+      "lx": 840,
+      "ly": 143,
+      "pts": [
+        [
+          560,
+          102
+        ],
+        [
+          560,
+          155
+        ],
+        [
+          1120,
+          155
+        ],
+        [
+          1120,
+          172
+        ]
+      ],
+      "anchor": "middle"
+    },
+    {
+      "from": "failed",
+      "to": "dead",
+      "label": "重试耗尽",
+      "kind": "red",
+      "lx": 903,
+      "ly": 410
+    },
+    {
+      "from": "failed",
+      "to": "pending",
+      "label": "重新入队（指数退避）",
+      "kind": "amber",
+      "dashed": true,
+      "anchor": "start",
+      "lx": 46,
+      "ly": 250,
+      "pts": [
+        [
+          1085,
+          237
+        ],
+        [
+          1085,
+          400
+        ],
+        [
+          40,
+          400
+        ],
+        [
+          40,
+          71
+        ],
+        [
+          56,
+          71
+        ]
+      ]
+    },
+    {
+      "from": "pending",
+      "to": "cancelled",
+      "label": "cancel",
+      "kind": "slate",
+      "anchor": "end",
+      "lx": 40,
+      "ly": 219,
+      "pts": [
+        [
+          60,
+          86
+        ],
+        [
+          40,
+          86
+        ],
+        [
+          40,
+          205
+        ],
+        [
+          56,
+          205
+        ]
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "type": "text",
+      "x": 62,
+      "y": 530,
+      "text": "状态落库",
+      "cls": "d-fig-t",
+      "fs": 12.5
+    },
+    {
+      "type": "text",
+      "x": 62,
+      "y": 552,
+      "cls": "d-sub",
+      "fs": 12,
+      "text": "jobs.status 为唯一事实 · 每次迁移写 job_steps · 同步写 audit_logs · 终态不可再迁移 · 恢复依据 checkpointer"
+    }
+  ],
+  "options": {
+    "width": 1240,
+    "margin": 60,
+    "row_gap": 72,
+    "col_gap": 60,
+    "y": 40,
+    "fs": 13.5,
+    "subfs": 10.5,
+    "allow_crossing": true
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "trend",
+  "layout": "dag",
+  "title": "归因链条",
+  "kind": "流程图",
+  "nodes": [
+    {
+      "id": "obs",
+      "title": "指标变化",
+      "sub": [
+        "完成率 +5pt"
+      ]
+    },
+    {
+      "id": "c1",
+      "title": "检索命中率提升",
+      "sub": [
+        "重排策略调整"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "c2",
+      "title": "无效重试减少",
+      "sub": [
+        "幂等标记生效"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "eff",
+      "title": "成本下降",
+      "sub": [
+        "Token -24%"
+      ],
+      "kind": "green"
+    }
+  ],
+  "edges": [
+    {
+      "from": "obs",
+      "to": "c1",
+      "label": "主因"
+    },
+    {
+      "from": "obs",
+      "to": "c2",
+      "label": "次因"
+    },
+    {
+      "from": "c1",
+      "to": "eff"
+    },
+    {
+      "from": "c2",
+      "to": "eff"
+    }
+  ],
+  "options": {
+    "y": 70,
+    "margin": 60
+  }
+}

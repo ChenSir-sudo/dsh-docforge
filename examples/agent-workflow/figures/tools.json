@@ -1,0 +1,121 @@
+{
+  "id": "tools",
+  "layout": "hub",
+  "title": "工具执行节点的约束",
+  "kind": "架构图",
+  "size": [
+    1240,
+    460
+  ],
+  "nodes": [
+    {
+      "id": "center",
+      "title": "工具执行节点",
+      "sub": [
+        "MCP 服务器 · HTTP API · CLI",
+        "统一封装为图中的一个节点"
+      ],
+      "kind": "teal"
+    },
+    {
+      "id": "t1",
+      "title": "超时控制",
+      "sub": [
+        "每个工具独立超时，建议 10–30 秒"
+      ],
+      "kind": "slate"
+    },
+    {
+      "id": "t2",
+      "title": "有限重试",
+      "sub": [
+        "指数退避，避免放大故障"
+      ],
+      "kind": "slate"
+    },
+    {
+      "id": "t3",
+      "title": "幂等保障",
+      "sub": [
+        "非幂等操作在 State 记录执行标记"
+      ],
+      "kind": "slate"
+    },
+    {
+      "id": "p1",
+      "title": "权限前置",
+      "sub": [
+        "调用前校验租户 / 角色权限"
+      ],
+      "kind": "slate"
+    },
+    {
+      "id": "p2",
+      "title": "统一返回",
+      "sub": [
+        "{ status, data, error }"
+      ],
+      "kind": "slate"
+    },
+    {
+      "id": "p3",
+      "title": "降级出口",
+      "sub": [
+        "失败返回可解释错误，不中断全图"
+      ],
+      "kind": "red"
+    },
+    {
+      "id": "audit",
+      "title": "审计留痕",
+      "sub": [
+        "每次工具调用写入审计日志：谁 · 何时 · 调了什么 · 结果"
+      ],
+      "kind": "violet",
+      "width": 470,
+      "height": 72
+    }
+  ],
+  "options": {
+    "center": "center",
+    "left": [
+      "t1",
+      "t2",
+      "t3"
+    ],
+    "right": [
+      "p1",
+      "p2",
+      "p3"
+    ],
+    "below": "audit",
+    "width": 1240,
+    "margin": 40,
+    "col_gap": 80,
+    "col_w": 330,
+    "gap_y": 22,
+    "center_y": 190,
+    "below_gap": 84,
+    "y": 24,
+    "fs": 14,
+    "subfs": 11
+  },
+  "notes": [
+    {
+      "type": "text",
+      "x": 40,
+      "y": 38,
+      "text": "执行约束",
+      "cls": "d-fig-t",
+      "fs": 12.5
+    },
+    {
+      "type": "text",
+      "x": 870,
+      "y": 38,
+      "text": "返回与安全",
+      "cls": "d-fig-t",
+      "fs": 12.5
+    }
+  ]
+}

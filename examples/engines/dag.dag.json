@@ -1,0 +1,60 @@
+{
+  "layout": "dag",
+  "title": "分层有向图",
+  "kind": "流程图",
+  "nodes": [
+    {
+      "id": "in",
+      "title": "请求",
+      "kind": "default"
+    },
+    {
+      "id": "cache",
+      "title": "缓存命中",
+      "kind": "teal"
+    },
+    {
+      "id": "miss",
+      "title": "未命中",
+      "kind": "amber"
+    },
+    {
+      "id": "calc",
+      "title": "重算",
+      "kind": "default"
+    },
+    {
+      "id": "out",
+      "title": "返回",
+      "kind": "green"
+    }
+  ],
+  "edges": [
+    {
+      "from": "in",
+      "to": "cache"
+    },
+    {
+      "from": "in",
+      "to": "miss",
+      "label": "else"
+    },
+    {
+      "from": "cache",
+      "to": "out",
+      "label": "命中"
+    },
+    {
+      "from": "miss",
+      "to": "calc"
+    },
+    {
+      "from": "calc",
+      "to": "out"
+    }
+  ],
+  "options": {
+    "center_sinks": true
+  },
+  "id": "dag"
+}

@@ -1,0 +1,111 @@
+{
+  "layout": "sequence",
+  "title": "请求时序",
+  "kind": "时序图",
+  "size": [
+    1200,
+    520
+  ],
+  "lanes": [
+    {
+      "id": "c",
+      "title": "客户端",
+      "sub": "Web / App"
+    },
+    {
+      "id": "a",
+      "title": "API 服务",
+      "sub": "鉴权 · 限流"
+    },
+    {
+      "id": "q",
+      "title": "任务队列",
+      "sub": "持久化"
+    },
+    {
+      "id": "w",
+      "title": "Worker",
+      "sub": "受控并发"
+    },
+    {
+      "id": "g",
+      "title": "LangGraph",
+      "sub": "图执行"
+    }
+  ],
+  "messages": [
+    {
+      "from": "c",
+      "to": "a",
+      "label": "POST /jobs（幂等键 · trace_id）"
+    },
+    {
+      "from": "a",
+      "to": "a",
+      "self": true,
+      "label": "鉴权 → 限流 → 校验"
+    },
+    {
+      "from": "a",
+      "to": "q",
+      "label": "入队 status=queued",
+      "kind": "violet"
+    },
+    {
+      "from": "a",
+      "to": "c",
+      "label": "202 + job_id",
+      "dashed": true
+    },
+    {
+      "from": "q",
+      "to": "w",
+      "label": "领取任务",
+      "kind": "violet"
+    },
+    {
+      "from": "w",
+      "to": "g",
+      "label": "graph.astream(state)",
+      "kind": "teal"
+    },
+    {
+      "from": "g",
+      "to": "g",
+      "self": true,
+      "label": "路由 / 检索 / 工具"
+    },
+    {
+      "from": "w",
+      "to": "a",
+      "label": "SSE 事件流",
+      "kind": "teal",
+      "dashed": true
+    },
+    {
+      "from": "a",
+      "to": "c",
+      "label": "流式中间步骤",
+      "kind": "teal",
+      "dashed": true
+    }
+  ],
+  "activations": [
+    {
+      "lane": "a",
+      "from": 0,
+      "to": 2
+    },
+    {
+      "lane": "q",
+      "from": 2,
+      "to": 4
+    },
+    {
+      "lane": "w",
+      "from": 4,
+      "to": 7
+    }
+  ],
+  "id": "sequence"
+}

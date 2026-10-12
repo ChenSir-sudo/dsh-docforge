@@ -1,0 +1,537 @@
+/* ===========================================================================
+   通用 Agent 实战开发流程 —— 文档与图示统一样式
+   浅色为默认主题，[data-theme="dark"] 覆盖为深色主题。
+   图示为内联 SVG，全部通过下面这些语义类取色，因此跟随主题一起切换。
+   =========================================================================== */
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.78;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ------------------------------------------------------------------ layout */
+/* --topbar-h is the sticky offset the outline sidebar hangs from; keep it in
+   step with .topbar-in's real height (10px padding + the .tbtn control + the
+   1px bottom border). */
+:root { --topbar-h: 53px; }
+
+/* The shell is the page grid: outline column + content column. Collapsing is
+   nothing more than animating the first track to zero, driven by
+   <html data-nav>, so there is no second source of truth to keep in sync.
+
+   minmax(0, 1fr) is load-bearing: a plain 1fr would be floored at the content
+   column's min-content width, and a wide inline diagram would then push the
+   grid -- and the whole page -- wider than the viewport instead of scaling
+   down to fit. */
+.shell {
+  --rail: 288px;                    /* the outline column; 0 when collapsed */
+  position: relative;               /* anchors .navrail */
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  align-items: start;
+  column-gap: 44px;
+  /* No max-width and no auto margins: centring the shell as a whole parked a
+     few hundred pixels of nothing to the left of the outline on a wide screen.
+     The outline belongs against the edge; only the article is width-limited. */
+  padding: 0 28px 96px;
+}
+
+/* Collapsed: the outline column goes to zero and the gutter goes with it. */
+[data-nav="closed"] .shell { --rail: 0px; column-gap: 0; }
+
+/* A --no-toc build has no outline aside at all. Declared after the
+   collapsed rule so it neutralises it too. */
+.shell.no-sidebar { grid-template-columns: minmax(0, 1fr); }
+
+/* --------------------------------------------------------------- sidebar */
+.sidebar {
+  position: sticky;
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+  align-self: start;
+  overscroll-behavior: contain;
+  border-right: 1px solid var(--line);
+  transition: opacity 160ms ease;
+}
+/* A collapsed sidebar must not be reachable by tab or by pointer. visibility:
+   hidden does both; pointer-events cuts the pointer off during the 160ms the
+   fade is still running. */
+[data-nav="closed"] .sidebar {
+  opacity: 0; visibility: hidden; pointer-events: none;
+  border-right-width: 0;
+  transition: opacity 160ms ease, visibility 0s linear 160ms;
+}
+
+/* The outline rail. It tracks the outline column's right edge through --rail,
+   so it stays put on the seam whether the outline is open or shut, and it stays
+   put on screen when the narrow layout turns the outline into a drawer. */
+.navrail {
+  position: fixed; z-index: 65;
+  top: calc(50vh + var(--topbar-h) / 2 - 13px);
+  left: calc(28px + var(--rail) - 13px);
+  width: 26px; height: 26px; padding: 0;
+  display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--surface); color: var(--ink-3);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+.navrail:hover {
+  color: var(--c-indigo);
+  border-color: color-mix(in srgb, var(--c-indigo) 40%, var(--line));
+}
+.navrail:active { transform: scale(.94); }
+.navrail:focus-visible { outline: 2px solid var(--c-indigo); outline-offset: 2px; }
+.navrail svg { width: 14px; height: 14px; transition: transform 180ms ease; }
+/* One icon, flipped: the chevron points at the edge the outline will move to. */
+[data-nav="closed"] .navrail { left: 28px; }
+[data-nav="closed"] .navrail svg { transform: rotate(180deg); }
+
+.topbar-spacer { flex: 1; }
+
+/* The content column must be allowed to shrink below its min-content width
+   (same reason as minmax(0, 1fr) above). It carries its own reading measure so
+   the *shell* can run edge to edge without the prose running edge to edge. */
+.content { min-width: 0; max-width: 1060px; width: 100%; margin: 0 auto; }
+
+/* Last-resort guard for the content column: inline code is nowrap because most
+   of it is short, but a single token wider than the column (a long path, an
+   API name) would otherwise push the whole page sideways. Only a token that
+   cannot fit at all is allowed to break; everything shorter is untouched. */
+.content :not(pre) > code { white-space: normal; overflow-wrap: anywhere; }
+
+/* The dimmed backdrop of the narrow-screen drawer. Inert everywhere else. */
+.scrim {
+  display: none;
+  position: fixed; inset: 0; z-index: 55;
+  background: color-mix(in srgb, var(--c-ink-ink) 42%, transparent);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
+}
+
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  backdrop-filter: saturate(1.5) blur(12px);
+  -webkit-backdrop-filter: saturate(1.5) blur(12px);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-in {
+  padding: 10px 28px;
+  display: flex; align-items: center; gap: 14px;
+}
+.topbar .brand {
+  font-weight: 700; font-size: 14px; letter-spacing: .01em;
+  display: flex; align-items: center; gap: 9px; white-space: nowrap;
+}
+.topbar .brand i {
+  width: 9px; height: 9px; border-radius: 3px; background: var(--c-indigo);
+  box-shadow: 0 0 0 3px var(--c-indigo-bg); display: inline-block;
+}
+.tbtn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  border-radius: 9px; padding: 5px 11px; font-size: 12.5px; cursor: pointer;
+  font-family: inherit; white-space: nowrap;
+}
+.tbtn:hover { border-color: var(--line-strong); color: var(--ink); }
+
+/* -------------------------------------------------------------------- hero */
+.hero {
+  padding: 62px 0 34px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 44px;
+}
+.hero .eyebrow {
+  display: inline-block; font-size: 12px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--c-indigo);
+  background: var(--c-indigo-bg); border-radius: 999px; padding: 5px 14px;
+  font-weight: 600; margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: clamp(28px, 4.3vw, 44px); line-height: 1.24; margin: 0 0 16px;
+  letter-spacing: -.015em; font-weight: 800;
+}
+.hero .lede { font-size: 17px; color: var(--ink-2); max-width: 76ch; margin: 0; }
+.hero .meta {
+  margin-top: 26px; display: flex; flex-wrap: wrap; gap: 8px;
+}
+.hero .meta span {
+  font-size: 12.5px; color: var(--ink-3); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 5px 11px;
+}
+
+/* ------------------------------------------------------------- typography */
+h1, h2, h3, h4, h5 { line-height: 1.35; letter-spacing: -.01em; }
+
+h1.doc {
+  font-size: clamp(23px, 3vw, 31px); font-weight: 800; margin: 68px 0 8px;
+  padding-bottom: 16px; border-bottom: 2px solid var(--ink);
+  display: flex; align-items: baseline; gap: 14px;
+}
+h1.doc::after {
+  content: ""; flex: 1;
+}
+
+h2 {
+  font-size: 21.5px; font-weight: 700; margin: 46px 0 14px; color: var(--ink);
+  display: flex; align-items: center; gap: 11px;
+}
+h2::before {
+  content: ""; width: 4px; height: 20px; border-radius: 3px;
+  background: var(--c-indigo); flex: none;
+}
+
+h3 {
+  font-size: 17px; font-weight: 700; margin: 32px 0 10px; color: var(--ink-2);
+  display: flex; align-items: center; gap: 9px;
+}
+h3::before {
+  content: ""; width: 7px; height: 7px; border-radius: 2px;
+  background: var(--c-teal); flex: none;
+}
+
+h4 { font-size: 15.5px; font-weight: 700; margin: 24px 0 8px; color: var(--ink-2); }
+h5 {
+  font-size: 13px; font-weight: 700; margin: 20px 0 6px; color: var(--ink-3);
+  letter-spacing: .04em; text-transform: uppercase;
+}
+
+p { margin: 0 0 14px; }
+strong { font-weight: 700; color: var(--ink); }
+a { color: var(--c-indigo); }
+
+hr {
+  border: 0; border-top: 1px solid var(--line); margin: 56px 0 0;
+}
+
+ul, ol { margin: 0 0 15px; padding-left: 1.45em; }
+li { margin: 5px 0; }
+li::marker { color: var(--ink-4); }
+ol > li::marker { color: var(--c-indigo); font-weight: 700; }
+
+blockquote {
+  margin: 18px 0; padding: 13px 18px; border-radius: 0 10px 10px 0;
+  border-left: 3px solid var(--c-indigo);
+  background: var(--c-indigo-bg); color: var(--ink-2);
+}
+blockquote p:last-child { margin-bottom: 0; }
+blockquote.note { border-left-color: var(--c-amber); background: var(--c-amber-bg); }
+blockquote.ok   { border-left-color: var(--c-green); background: var(--c-green-bg); }
+
+/* -------------------------------------------------------------------- code */
+pre {
+  margin: 16px 0; padding: 16px 18px; overflow-x: auto;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  font-size: 13.2px; line-height: 1.7;
+}
+pre code {
+  font-family: var(--mono); color: var(--ink-2);
+  white-space: pre; background: none; padding: 0; border: 0;
+}
+:not(pre) > code {
+  font-family: var(--mono); font-size: .875em;
+  background: var(--surface-3); border: 1px solid var(--line);
+  padding: 1px 6px; border-radius: 6px; color: var(--c-indigo-ink);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------- table */
+.tw { overflow-x: auto; margin: 18px 0; border-radius: var(--radius);
+      border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+thead th {
+  background: var(--surface-2); text-align: left; font-weight: 700;
+  padding: 11px 14px; border-bottom: 1px solid var(--line);
+  color: var(--ink); white-space: nowrap; font-size: 13px;
+}
+tbody td {
+  padding: 11px 14px; border-bottom: 1px solid var(--line);
+  vertical-align: top; color: var(--ink-2);
+}
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--surface-2); }
+td code { white-space: nowrap; }
+
+/* ----------------------------------------------------------------- figures */
+figure {
+  margin: 26px 0 30px; padding: 0;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 18px; box-shadow: var(--shadow-md); overflow: hidden;
+}
+figure .fighead {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px; border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+figure .fighead .num {
+  font-size: 11.5px; font-weight: 700; letter-spacing: .06em;
+  color: var(--surface); background: var(--c-indigo);
+  border-radius: 6px; padding: 3px 9px; white-space: nowrap;
+}
+figure .fighead .name { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+figure .fighead .kind {
+  margin-left: auto; font-size: 11px; color: var(--ink-3);
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  padding: 2px 9px; white-space: nowrap;
+}
+figure .canvas { padding: 16px 16px 6px; overflow-x: auto; }
+/* No min-width: an inline SVG carries a viewBox, so `width: 100%` scales the
+   whole diagram down to whatever the column allows. A floor here is what used
+   to clip (or push) the page sideways on narrow screens; .canvas' overflow-x
+   stays as the last-resort net for a figure that cannot shrink gracefully. */
+figure svg { display: block; width: 100%; height: auto; max-width: 100%; }
+figure figcaption {
+  padding: 4px 20px 18px; font-size: 13.2px; color: var(--ink-3);
+  line-height: 1.7;
+}
+figure figcaption b { color: var(--ink-2); }
+
+
+
+/* -- kind colours: node boxes ------------------------------------------- */
+
+
+/* -- kind colours: edges ------------------------------------------------- */
+
+
+/* --------------------------------------------------------------- callouts */
+.cards { display: grid; gap: 14px; margin: 20px 0; }
+.cards.c2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.cards.c3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 15px 17px; box-shadow: var(--shadow-sm);
+}
+.card h6 {
+  margin: 0 0 7px; font-size: 13px; font-weight: 700; color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+}
+.card h6 i { width: 7px; height: 7px; border-radius: 2px; background: var(--c-indigo); }
+.card p { font-size: 13.5px; color: var(--ink-3); margin: 0; line-height: 1.65; }
+.card ul { font-size: 13.5px; color: var(--ink-3); margin: 0; padding-left: 1.2em; }
+
+/* -------------------------------------------------------------- acceptance */
+.accept {
+  display: flex; gap: 13px; align-items: flex-start;
+  margin: 20px 0 8px; padding: 14px 17px;
+  background: var(--c-green-bg); border: 1px solid color-mix(in srgb, var(--c-green) 35%, transparent);
+  border-radius: var(--radius);
+}
+.accept .mark {
+  flex: none; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  color: var(--surface); background: var(--c-green);
+  border-radius: 6px; padding: 3px 9px; margin-top: 3px; white-space: nowrap;
+}
+.accept .body { font-size: 14px; color: var(--ink-2); }
+.accept .body p { margin: 0; }
+.accept .body strong { color: var(--c-green-ink); }
+
+.goal {
+  display: flex; gap: 13px; align-items: flex-start;
+  margin: 20px 0; padding: 14px 17px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--c-indigo); border-radius: var(--radius);
+}
+.goal .mark {
+  flex: none; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  color: var(--surface); background: var(--c-indigo);
+  border-radius: 6px; padding: 3px 9px; margin-top: 3px;
+}
+.goal .body { font-size: 14px; color: var(--ink-2); }
+.goal .body p { margin: 0; }
+
+/* --------------------------------------------------------------------- toc */
+.toc {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 18px; padding: 24px 26px; box-shadow: var(--shadow-sm);
+  margin: 0 0 12px;
+}
+.toc h2 { margin-top: 0; }
+.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: t; }
+.toc > ol > li { counter-increment: t; margin: 0 0 3px; }
+.toc > ol > li > a {
+  display: block; text-decoration: none; color: var(--ink);
+  font-weight: 700; font-size: 14.5px; padding: 7px 0 4px;
+  border-top: 1px solid var(--line); margin-top: 9px;
+}
+.toc > ol > li:first-child > a { border-top: 0; margin-top: 0; }
+.toc a:hover { color: var(--c-indigo); }
+.toc ul { list-style: none; padding: 0; margin: 0 0 4px 2px;
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 18px; }
+.toc ul a {
+  font-size: 13px; color: var(--ink-3); text-decoration: none;
+  display: block; padding: 3px 0;
+}
+.toc ul a:hover { color: var(--c-indigo); }
+
+/* The outline is no longer a card in the flow -- it is the sidebar's whole
+   content, so it drops the card chrome and reads as a nav list instead. */
+.sidebar .toc {
+  background: none; border: 0; border-radius: 0; box-shadow: none;
+  padding: 24px 14px 40px 0; margin: 0;
+}
+.sidebar .toc h2 {
+  margin: 0 0 12px; padding-left: 10px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-4);
+}
+.sidebar .toc h2::before { display: none; }
+.sidebar .toc > ol > li > a {
+  border-top: 0; margin-top: 0; padding: 7px 10px; border-radius: 8px;
+  font-size: 13.5px; font-weight: 600;
+}
+.sidebar .toc > ol > li > a:hover { background: var(--surface-3); color: var(--c-indigo); }
+.sidebar .toc ul { display: block; margin: 1px 0 8px; }
+.sidebar .toc ul a { padding: 5px 10px 5px 20px; border-radius: 8px; font-size: 12.5px; }
+.sidebar .toc ul a:hover { background: var(--surface-3); color: var(--c-indigo); }
+
+/* ------------------------------------------------------------------- misc */
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 14px 0 4px; font-size: 12.5px;
+          color: var(--ink-3); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 12px; height: 12px; border-radius: 4px; display: inline-block;
+            border: 1.4px solid; }
+
+.pillrow { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0 18px; }
+.pillrow span {
+  font-size: 12.5px; border-radius: 999px; padding: 4px 12px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-3);
+}
+
+footer.doc {
+  margin-top: 60px; padding-top: 26px; border-top: 1px solid var(--line);
+  font-size: 13px; color: var(--ink-4); display: flex; flex-wrap: wrap;
+  gap: 10px 22px; justify-content: space-between;
+}
+
+@media (max-width: 720px) {
+  body { font-size: 15.2px; }
+  .hero { padding: 40px 0 26px; }
+}
+
+/* ------------------------------------------------- drawer (narrow screens) */
+/* One breakpoint, 1080px: below it the 288px column would leave too little
+   room for a figure, so the same aside is lifted out of the grid and
+   becomes an off-canvas drawer. `data-nav` still decides open vs closed; only
+   the mechanism changes (translate instead of grid track). */
+@media (max-width: 1080px) {
+  .shell, .shell.no-sidebar {
+    display: block; max-width: none; padding: 0 18px 72px;
+    grid-template-columns: none; column-gap: 0;
+  }
+  /* Above the scrim (55) and the drawer (60) so the toggle stays clickable
+     while the drawer is open; the drawer hangs from below it. */
+  .topbar { z-index: 70; }
+  .scrim { display: block; }
+  [data-nav="open"] .scrim {
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transition: opacity 180ms ease;
+  }
+  .sidebar {
+    position: fixed; top: var(--topbar-h); left: 0; bottom: auto;
+    width: min(86vw, 320px);
+    z-index: 60;
+    background: var(--bg);
+    border-right: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+    transform: translateX(-102%);
+    transition: transform 180ms ease;
+  }
+  .sidebar .toc { padding-left: 12px; }
+  /* The drawer is fixed, so its rail has to leave the page flow as well or it
+     would scroll away from the panel it controls. */
+  [data-nav="open"] .sidebar { transform: none; }
+  [data-nav="closed"] .sidebar {
+    opacity: 1; visibility: hidden;
+    transform: translateX(-102%);
+    transition: transform 180ms ease, visibility 0s linear 180ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .shell, .sidebar, .scrim { transition: none !important; }
+}
+
+@media print {
+  .topbar, .sidebar, .scrim { display: none !important; }
+  .shell, .shell.no-sidebar {
+    display: block !important; max-width: none; padding: 0;
+    grid-template-columns: none !important;
+  }
+  body { background: #fff; }
+  figure, pre, .card { box-shadow: none; break-inside: avoid; }
+  h1.doc { break-before: page; }
+}
+
+/* ------------------------------------------------- sequence / state extras */
+
+/* ------------------------------------------------------------------ finder */
+/* The field sits in the topbar and is always on screen; only the result list
+   drops down, so searching costs no click. */
+.searchbox { position: relative; flex: 0 1 260px; min-width: 150px; }
+.searchbox input {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid var(--line); border-radius: 9px;
+  background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 12.5px; padding: 5px 11px;
+}
+.searchbox input::placeholder { color: var(--ink-3); }
+.searchbox input:focus {
+  outline: none; border-color: var(--c-indigo);
+  box-shadow: 0 0 0 3px var(--c-indigo-bg);
+}
+.finder-list { display: none; }
+.searchbox[data-open="1"] .finder-list {
+  display: block;
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 90;
+  width: min(86vw, 460px);
+  max-height: min(60vh, 440px); overflow-y: auto;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: var(--shadow-md);
+  overflow-x: hidden;
+}
+.finder-empty { padding: 18px; color: var(--ink-3); font-size: 13.5px; }
+.finder-row {
+  display: block; width: 100%; text-align: left;
+  border: 0; background: none; cursor: pointer;
+  font: inherit; color: var(--ink-2);
+  padding: 10px 18px; border-bottom: 1px solid var(--line);
+}
+.finder-row:last-child { border-bottom: 0; }
+.finder-row:hover, .finder-row[data-active="1"] { background: var(--surface-3); }
+.finder-where {
+  display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--c-indigo); margin-bottom: 3px;
+}
+.finder-snip { display: block; font-size: 13px; line-height: 1.5; }
+.finder-row mark {
+  background: color-mix(in srgb, var(--c-amber) 38%, transparent);
+  color: inherit; border-radius: 3px;
+  font-weight: 700;                 /* the hit is what the eye should land on */
+}
+
+/* Where a search result landed. Fades on its own so the page is left as found. */
+.finder-hit { animation: finder-hit 1.9s ease-out; }
+@keyframes finder-hit {
+  0%, 55% { background: color-mix(in srgb, var(--c-amber) 30%, transparent); }
+  100% { background: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .finder-hit { animation: none; background: color-mix(in srgb, var(--c-amber) 24%, transparent); }
+}

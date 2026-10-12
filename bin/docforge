@@ -1,0 +1,13 @@
+#!/bin/sh
+# Convenience wrapper. Equivalent to: python3 -m docforge.cli "$@"
+# Works from any cwd: resolves this script's real location through symlinks.
+set -e
+SELF=$0
+while [ -L "$SELF" ]; do
+  DIR=$(cd "$(dirname "$SELF")" && pwd)
+  SELF=$(readlink "$SELF")
+  case "$SELF" in /*) ;; *) SELF="$DIR/$SELF" ;; esac
+done
+ROOT=$(cd "$(dirname "$SELF")/.." && pwd)
+PY=${DOCFORGE_PYTHON:-python3}
+exec "$PY" -c 'import sys; sys.path.insert(0, sys.argv.pop(1)); from docforge.cli import main; sys.exit(main())' "$ROOT" "$@"
