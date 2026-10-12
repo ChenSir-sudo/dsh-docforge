@@ -310,7 +310,7 @@ docforge fig     <figure.json> [-o out.svg] [--png out.png] [--mode light|dark] 
 docforge check   <figure.json|material.md>... [--fail-on] [--format] [--clearance N]
 docforge init    <dir> [--template doc|report|course] [--force]
 docforge themes | layouts | examples [--json]
-docforge shot    <in.html> <out.png> [--width] [--height] [--scale]
+docforge shot    <in.html> <out.png> [--width] [--height] [--scale] [--timeout N]
 docforge skill-info [--json]
 ```
 

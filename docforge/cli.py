@@ -115,6 +115,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--height", type=int, default=2400)
     s.add_argument("--scale", type=float, default=2.0)
     s.add_argument("--browser", default=None)
+    s.add_argument("--timeout", type=int, default=180,
+                   help="秒；整次截图的死线，含排队等待（默认 180）")
 
     e = sub.add_parser("examples", help="列出随包示例")
     e.add_argument("--json", action="store_true")
@@ -456,8 +458,12 @@ def cmd_layouts(args) -> int:
 def cmd_shot(args) -> int:
     from . import render as R
     try:
+        # `--timeout` is the whole operation's deadline, not just the browser's:
+        # waiting behind another screenshot is the same experience for the
+        # caller as the browser being slow, so both are bounded by it.
         out = R.shot(args.html, args.png, width=args.width, height=args.height,
-                     scale=args.scale, browser=args.browser)
+                     scale=args.scale, browser=args.browser,
+                     timeout=args.timeout, wait_for_lock=args.timeout)
     except R.RenderError as exc:
         print(f"docforge: {exc}", file=sys.stderr)
         return EXIT_USAGE
