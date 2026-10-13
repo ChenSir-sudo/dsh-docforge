@@ -78,9 +78,9 @@ docforge skill-info
 }
 ```
 
-十三个布局引擎。关系型：`pipeline` `dag` `fan` `layers` `hub` `ring` `sequence` `state` `grid` `free`；
-数据型：`matrix`（格子网格，按 `level` 分档着色）、`timeline`（沿一根轴的区间，重叠自动分道）、
-`funnel`（按数值收窄的阶段）。
+十四个布局引擎。关系型：`pipeline` `dag` `fan` `layers` `hub` `ring` `sequence` `state` `grid` `free`；
+数据型：`matrix`（格子网格，深浅连续可调）、`timeline`（沿一根轴的区间，重叠自动分道，可画依赖箭头）、
+`funnel`（按数值收窄的阶段）；层级：`tree`。
 每个的用途和参数：
 
 ```bash
@@ -234,7 +234,7 @@ docforge/
     text.py           中英混排宽度度量
     geom.py           Rect / 线段 / 圆角折线 / 弧线采样
     scene.py          Scene：画图 + 记录几何
-    layouts.py        十三个布局引擎（产出 Plan，不直接画）
+    layouts.py        十四个布局引擎（产出 Plan，不直接画）
     specs.py          图示规格：加载 / 校验 / 渲染
     validate.py       几何与文档校验
     theme.py          主题 token → CSS

@@ -89,11 +89,11 @@ content** — you never compute coordinates.
 }
 ```
 
-Thirteen layout engines. Relational shapes: `pipeline` `dag` `fan` `layers` `hub`
+Fourteen layout engines. Relational shapes: `pipeline` `dag` `fan` `layers` `hub`
 `ring` `sequence` `state` `grid` `free`. Data shapes: `matrix` (a grid of cells,
-tinted by `level`), `timeline` (spans positioned on one axis, auto-packed into
-sub-lanes when they overlap), `funnel` (stages that narrow by value). Ask for the
-current list and each one's parameters:
+tinted continuously), `timeline` (spans on one axis, auto-packed into sub-lanes
+when they overlap, with dependency arrows), `funnel` (stages that narrow by
+value). Hierarchy: `tree`. Ask for the current list and each one's parameters:
 
 ```bash
 bin/docforge layouts
@@ -280,7 +280,7 @@ dsh-docforge/
     text.py           CJK/Latin width metrics
     geom.py           Rect / segments / rounded polylines / arc sampling
     scene.py          Scene: draws and records geometry
-    layouts.py        the thirteen layout engines (produce a Plan, never draw)
+    layouts.py        the fourteen layout engines (produce a Plan, never draw)
     specs.py          figure specs: load / normalise / validate / render
     validate.py       geometry and document validation
     theme.py          theme tokens → CSS
