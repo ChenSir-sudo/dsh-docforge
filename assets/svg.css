@@ -105,12 +105,11 @@
 .dg .k-slate, .dg .k-line, .dg .k-default { --cell-accent: var(--c-slate); }
 .dg .k-ink    { --cell-accent: var(--c-ink-ink); }
 
-.dg .d-cell   { stroke: var(--line-strong); stroke-width: 1; }
-.dg .d-cell.lv-0 { fill: var(--surface); }
-.dg .d-cell.lv-1 { fill: color-mix(in srgb, var(--cell-accent) 16%, var(--surface)); }
-.dg .d-cell.lv-2 { fill: color-mix(in srgb, var(--cell-accent) 34%, var(--surface)); }
-.dg .d-cell.lv-3 { fill: color-mix(in srgb, var(--cell-accent) 54%, var(--surface)); }
-.dg .d-cell.lv-4 { fill: color-mix(in srgb, var(--cell-accent) 76%, var(--surface)); }
+.dg .d-cell   { stroke: var(--line-strong); stroke-width: 1; fill: var(--surface); }
+/* The accent wash. Its strength rides on fill-opacity, which is set per cell,
+   so the colour itself stays a theme variable at every level -- no mixing, and
+   a continuous scale costs nothing extra. */
+.dg .d-cell-fill { stroke: none; fill: var(--cell-accent); }
 .dg .d-cell-v { fill: var(--ink); font-weight: 700; }
 .dg .d-cell-l { fill: var(--ink-3); }
 

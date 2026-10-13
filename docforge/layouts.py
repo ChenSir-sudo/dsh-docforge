@@ -1324,6 +1324,7 @@ def render(spec, scene: Scene = None, path: str = None, _depth: int = 0) -> Scen
         elif shape == "cell":
             sc.cell(r.x, r.y, r.w, r.h, value=n.get("value"), label=n.get("title"),
                     kind=n.get("kind", "default"), level=n.get("level", 0), id=nid,
+                    level_ratio=n.get("level_ratio"),
                     vfs=n.get("vfs", 17.0), lfs=n.get("lfs", 10.5),
                     pad=n.get("pad", 10.0), rx=n.get("rx", 8.0))
         elif shape == "bar":

@@ -488,6 +488,29 @@ class DataPrimitiveTest(unittest.TestCase):
         self.assertEqual(4, self.sc.cell(0, 0, 50, 50, value="x", level=9).meta["level"])
         self.assertEqual(0, self.sc.cell(0, 0, 50, 50, value="x", level=-2).meta["level"])
 
+    def test_the_stepped_level_maps_onto_the_continuous_one(self):
+        ratio = self.sc.cell(0, 0, 50, 50, value="x", level=2).meta["level_ratio"]
+        self.assertAlmostEqual(0.5, ratio)
+
+    def test_a_continuous_ratio_is_accepted_directly(self):
+        it = self.sc.cell(0, 0, 50, 50, value="x", level_ratio=0.62)
+        self.assertAlmostEqual(0.62, it.meta["level_ratio"])
+
+    def test_a_ratio_outside_zero_to_one_is_clamped(self):
+        self.assertEqual(0.0, self.sc.cell(0, 0, 50, 50, value="x",
+                                          level_ratio=-3).meta["level_ratio"])
+        self.assertEqual(1.0, self.sc.cell(0, 0, 50, 50, value="x",
+                                          level_ratio=7).meta["level_ratio"])
+
+    def test_the_wash_is_a_theme_variable_not_a_baked_colour(self):
+        """Intensity rides on fill-opacity, so the colour stays themable."""
+        svg = self.sc.svg(standalone=False)
+        self.sc.cell(0, 0, 80, 60, value="1", level_ratio=0.5, kind="indigo")
+        svg = self.sc.svg(standalone=False)
+        self.assertIn('class="d-cell-fill"', svg)
+        self.assertIn('fill-opacity="0.390"', svg)
+        self.assertNotIn('fill="#', svg)
+
     def test_a_cell_with_only_a_label_records_one_text(self):
         it = self.sc.cell(0, 0, 120, 60, label="空")
         self.assertEqual(1, len(it.text_boxes))

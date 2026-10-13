@@ -384,21 +384,31 @@ class Scene:
     # overlap and edge-through all apply to them without extra rules.
     # ------------------------------------------------------------------
     def cell(self, x, y, w, h, value=None, label=None, kind="default",
-             level=0, id=None, vfs=17.0, lfs=10.5, pad=10.0, rx=8.0):
+             level=0, id=None, vfs=17.0, lfs=10.5, pad=10.0, rx=8.0,
+             level_ratio=None):
         """One matrix cell: a value, with an optional caption beneath it.
 
-        ``level`` (0-4) mixes the cell's kind accent into its fill. That is what
-        lets a grid read as a heat map instead of a table -- the intensity is
-        carried by the colour, so the numbers stay legible on top of it.
+        Intensity is what lets a grid read as a heat map instead of a table.
+        Two ways to say it: ``level`` is the stepped 0-4 scale, ``level_ratio``
+        is a continuous 0.0-1.0. The ratio is applied by *layering* an accent
+        wash over the surface rather than by computing a mixed colour, so it
+        stays a theme variable at every opacity and needs no colour arithmetic.
         """
         level = max(0, min(4, int(level)))
+        ratio = level / 4.0 if level_ratio is None else max(0.0, min(1.0, float(level_ratio)))
         value = "" if value is None else str(value)
         label = str(label) if label else ""
         self.raw(f'<g class="nd k-{kind}">')
         self.raw(
-            f'<rect class="d-cell lv-{level}" x="{x:g}" y="{y:g}" width="{w:g}" '
+            f'<rect class="d-cell" x="{x:g}" y="{y:g}" width="{w:g}" '
             f'height="{h:g}" rx="{rx:g}"/>'
         )
+        if ratio > 0:
+            # 0.78 is the ceiling: at full strength the value must still read.
+            self.raw(
+                f'<rect class="d-cell-fill" x="{x:g}" y="{y:g}" width="{w:g}" '
+                f'height="{h:g}" rx="{rx:g}" fill-opacity="{0.78 * ratio:.3f}"/>'
+            )
         boxes = []
         inner = Rect(x + pad, y + pad, w - 2 * pad, h - 2 * pad)
         if value and label:
@@ -432,6 +442,7 @@ class Scene:
             kind="cell", bbox=Rect(x, y, w, h), inner=inner,
             text_boxes=boxes, id=id or self._auto_id(),
             meta={"kind": kind, "label": label or value, "level": level,
+                  "level_ratio": round(ratio, 4),
                   "lines": [t for t in (value, label) if t]},
         ))
 
