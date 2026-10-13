@@ -86,6 +86,22 @@ class Plan:
     def rect(self, node_id: str) -> Rect:
         return self.placements[node_id]
 
+    def auto_size(self, width=None, margin=None):
+        """Declare the canvas from what has actually been placed.
+
+        Engines used to leave ``size`` unset and let the renderer infer it from
+        the placements. That inference was invisible from the engine, so nothing
+        told a new engine whether it owed a size. Saying it out loud costs one
+        line and makes the contract checkable.
+        """
+        b = self.union(self.placements)
+        pad = self.margin if margin is None else margin
+        # A requested width is a *target*. If the content needs more room, the
+        # canvas grows rather than the content spilling off the edge -- a canvas
+        # narrower than its contents can only ever clip them.
+        self.size = (max(width or 0.0, b.right + pad), b.bottom + pad)
+        return self.size
+
     def union(self, ids) -> Rect:
         rects = [self.placements[i] for i in ids if i in self.placements]
         if not rects:
@@ -116,6 +132,12 @@ def node_size(n: dict, fs=None, subfs=None, pad=NODE_PAD, vpad=NODE_VPAD):
     """
     if n.get("as_card"):
         return card_size(n)
+    hosted = embed_size(n, float(n.get("fs", 13.5)))
+    if n.get("as") == "embed" or (hosted and n.get("as") is None):
+        # A host node is as big as the figure it contains, plus its own title.
+        w, h = hosted or (0.0, 0.0)
+        return (float(n.get("width") or max(w, MIN_W)),
+                float(n.get("height") or max(h, 40.0)))
     fs = float(n.get("fs", fs or 15.0))
     subfs = float(n.get("subfs", subfs or 11.5))
     subs = _subs(n)
@@ -356,6 +378,7 @@ def _pipeline(spec) -> Plan:
                  (margin - 20, b.cy), (b.x - 4, b.cy)],
                 kind=opts.get("wrap_kind", "slate"), dashed=True, r=14,
             ))
+    plan.auto_size()
     return plan
 
 
@@ -451,6 +474,7 @@ def _fan(spec) -> Plan:
         [(riser, src.cy), (riser, plan.placements[targets[-1]].cy)],
         kind=kind, head=False, r=0, from_id=source,
     ))
+    plan.auto_size()
     return plan
 
 
@@ -570,8 +594,9 @@ def _dag(spec) -> Plan:
             lx=e.get("lx"), ly=e.get("ly"), anchor=e.get("anchor", "middle"),
             r=12.0, head=e.get("head", True),
         ))
+    plan.auto_size(width=width, margin=margin)
     if bus_y is not None:
-        plan.size = (width, bus_y + 34.0)
+        plan.size = (plan.size[0], max(plan.size[1], bus_y + 34.0))
     return plan
 
 
@@ -603,6 +628,7 @@ def _grid(spec) -> Plan:
         plan.placements[it["id"]] = Rect(
             margin + c * (cw + gap_x), origin_y + r * (ch + gap_y), cw, ch
         )
+    plan.auto_size()
     return plan
 
 
@@ -723,6 +749,7 @@ def _hub(spec) -> Plan:
             [(c.cx, c.bottom), (b.cx, b.y - 4)], kind=opts.get("below_kind", "violet"),
             from_id=center, to_id=below,
         ))
+    plan.auto_size()
     return plan
 
 
@@ -793,6 +820,10 @@ def _ring(spec) -> Plan:
     if centre_id:
         w, h = node_size(by_id[centre_id], 15.0, 11.0)
         plan.placements[centre_id] = Rect(cx - w / 2.0, cy - h / 2.0, w, h)
+    # the arcs bulge past the boxes, so the union of the placements is not the
+    # extent of the figure -- the ellipse is
+    plan.size = (cx + rx + opts.get("margin", 40.0),
+                 cy + ry + opts.get("margin", 40.0))
     return plan
 
 
@@ -913,6 +944,7 @@ def _state(spec) -> Plan:
             lx=t.get("lx"), ly=t.get("ly"), anchor=t.get("anchor", "middle"),
             r=t.get("r", 12.0), head=t.get("head", True),
         ))
+    plan.auto_size()
     return plan
 
 
@@ -1162,17 +1194,62 @@ def _free(spec) -> Plan:
         plan.bands.append(Band(**b))
     if spec.get("size"):
         plan.size = tuple(spec["size"])
+    else:
+        plan.auto_size()
     return plan
 
 
-# --------------------------------------------------------------------------
-# Render
-# --------------------------------------------------------------------------
-def render(spec, scene: Scene = None) -> Scene:
+#: How deep a figure may nest. A sub-spec cannot literally reference itself,
+#: but nothing stops an author building a deep chain, and past a few levels the
+#: result is unreadable anyway.
+EMBED_DEPTH = 4
+
+#: Horizontal room an embedded figure keeps inside its host box.
+EMBED_PAD = 12.0
+
+
+def embed_size(n, fs=13.5, pad=EMBED_PAD) -> tuple:
+    """Size of a node that hosts a nested figure: its title plus the content."""
+    emb = n.get("_embed")
+    if not emb:
+        return None
+    title = str(n.get("title", ""))
+    head = (fs + 14.0) if title else 0.0
+    head = float(n.get("head_h", head))
+    tw = T.tw(title, fs) + 2 * pad if title else 0.0
+    return (max(tw, emb["w"] + 2 * pad), head + emb["h"] + 2 * pad)
+
+
+def resolve_embeds(spec, path, depth=0) -> None:
+    """Render every nested spec a level down, once, before layout.
+
+    An engine has to know how big a host node is before it can place it, and
+    that size depends on the nested figure -- so the recursion happens first and
+    the result is parked on the node. Rendering here rather than in ``render``
+    also means each child is built exactly once.
+    """
+    for n in spec.get("nodes", []):
+        sub = n.get("sub_spec")
+        if not sub:
+            n.pop("_embed", None)
+            continue
+        if depth + 1 > EMBED_DEPTH:
+            raise ValueError(
+                f"{path}/{n.get('id')}: figures nested deeper than {EMBED_DEPTH}"
+            )
+        sub_path = f"{path}/{n.get('id')}"
+        child = render(sub, path=sub_path, _depth=depth + 1)
+        n["_embed"] = {"scene": child, "w": child.width, "h": child.height,
+                       "path": sub_path}
+
+
+def render(spec, scene: Scene = None, path: str = None, _depth: int = 0) -> Scene:
     """Plan a figure and draw it."""
     name = engine_for(spec)
     if name not in LAYOUTS:
         raise KeyError(f"unknown layout {name!r}; known: {', '.join(sorted(LAYOUTS))}")
+    path = path or str(spec.get("id", "fig"))
+    resolve_embeds(spec, path, _depth)
     plan = LAYOUTS[name](spec)
     opts = spec.get("options", {})
     margin = opts.get("margin", plan.margin)
@@ -1186,20 +1263,21 @@ def render(spec, scene: Scene = None) -> Scene:
         )
 
     # -- size ---------------------------------------------------------------
-    declared = spec.get("size") or (plan.size and list(plan.size))
-    if declared:
-        width, height = float(declared[0]), float(declared[1])
-        if plan.size:
-            # the engine laid the content out and knows how tall it is; a
-            # smaller declared size would clip it, and clipping is never right
-            height = max(height, float(plan.size[1]))
-    else:
-        b = plan.union(plan.placements)
-        width = float(opts.get("width", 1200.0 if opts.get("fixed_width", True) else b.right + margin))
-        height = b.bottom + margin
+    # The engine knows how big its figure is; the renderer does not guess. A
+    # declared size acts as a *minimum* on both axes, because a canvas smaller
+    # than its contents can only ever clip them.
+    if not plan.size:
+        raise ValueError(
+            f"layout {name!r} did not declare a size; an engine must set "
+            f"plan.size or call plan.auto_size()"
+        )
+    width, height = float(plan.size[0]), float(plan.size[1])
+    if spec.get("size"):
+        width = max(width, float(spec["size"][0]))
+        height = max(height, float(spec["size"][1]))
 
     sc = scene or Scene(
-        spec.get("id", "fig"), width, height,
+        path, width, height,
         title=spec.get("title", ""),
         description=spec.get("description") or spec.get("title", ""),
     )
@@ -1231,7 +1309,8 @@ def render(spec, scene: Scene = None) -> Scene:
         hint = plan.shapes.get(nid) or {}
         shape = (n.get("as") or hint.get("as")
                  or ("card" if n.get("as_card") else
-                     "chip" if n.get("as_chip") else "node"))
+                     "chip" if n.get("as_chip") else
+                     "embed" if n.get("_embed") else "node"))
         if shape == "card":
             sc.card(r.x, r.y, r.w, r.h, n.get("title", ""), n.get("sub"),
                     n.get("items", []), kind=n.get("kind", "default"), id=nid,
@@ -1251,6 +1330,14 @@ def render(spec, scene: Scene = None) -> Scene:
             sc.bar(r.x, r.y, r.w, r.h, n.get("title"),
                    kind=n.get("kind", "teal"), dashed=n.get("dashed", False),
                    id=nid, fs=n.get("fs", 11.0), pad=n.get("pad", 9.0))
+        elif shape == "embed":
+            child = (n.get("_embed") or {}).get("scene")
+            if child is not None:
+                sc.children[nid] = child
+            sc.embed(r.x, r.y, r.w, r.h, n.get("title", ""), child,
+                     kind=n.get("kind", "default"), id=nid,
+                     fs=n.get("fs", 13.5), pad=n.get("pad", EMBED_PAD),
+                     head_h=n.get("head_h"))
         elif shape == "funnel":
             # An engine that computes the taper passes it through `shapes`; a
             # hand-placed one declares `w_top` / `w_bottom` itself. Falling back

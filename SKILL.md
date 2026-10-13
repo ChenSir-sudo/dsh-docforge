@@ -135,6 +135,25 @@ numbering: auto       # auto：标题自动编号（一、/ 1. / [1] / 1.1 / [1]
 
 `@路径` 相对物料文件所在目录解析。图块里的 `<id>` 必须和 spec 的 `id` 一致。
 
+## 2.5 嵌套：一个节点里放一张图
+
+节点可以带 `sub_spec`——一份完整的图示规格。子图**按自己的固有尺寸**画进宿主节点里，不缩放（缩放会把字号一起缩掉），并且带自己的 id 命名空间，所以箭头不会串色。
+
+```json
+{"id": "retrieval", "title": "检索子系统",
+ "sub_spec": {"id": "inner", "layout": "pipeline", "size": [560, 130],
+   "nodes": [{"id": "q", "title": "查询"}, {"id": "r", "title": "检索"}],
+   "edges": [{"from": "q", "to": "r"}]}}
+```
+
+三条要点：
+
+1. **子规格应该自己声明 `size`**。不声明就按该引擎的默认宽度（通常 1200），塞进宿主里多半会超框。
+2. **子图照常全量校验**。嵌套不是躲过校验的通道——里面的问题会带着路径浮上来，形如 `[host/retrieval] text-overflow: ...`。
+3. **最多四层**。超过就报错，不会无限递归。
+
+宿主节点由引擎正常摆位，`node_size` 会自动把它算成「标题 + 子图」，所以**所有布局引擎都能直接用嵌套**，不需要改引擎。
+
 ## 3. 图示格式
 
 一个 spec 是一个 JSON 对象。**引擎负责摆位，spec 负责内容**——你不需要算坐标。
@@ -236,6 +255,7 @@ $SKILL_DIR/bin/docforge check ./out/material.md --fail-on warning
 | `text-overflow` | 文字比盒子宽 | 缩短文案，或加 `width`，或拆成两行 `sub` |
 | `box-overlap` | 两个盒子相交 | 调 `gap` / `margin` / `size`，或换 layout |
 | `edge-over-label` | 一条连线从**别人的**标签文字上穿过 | 挪标签坐标（`lx`/`ly`），或给连线加 `pts` 绕开 |
+| `embed-overflow` | 嵌套子图比宿主给它的内容区大 | 给子规格声明更小的 `size`，或别给宿主写死 `width`/`height` |
 | `label-collision`（图注） | 一段图注压到了分层带的**表头**上 | 把图注移出带外（通常给 `options.y` 留出表头条），或删掉它 |
 | `edge-through` | 连线穿过无关节点 | 改 layout，或给这条边 `out`/`into`/`channel`/`pts` |
 | `label-collision` | 标签压在盒子或别的标签上 | 给边显式 `lx`/`ly`，或去掉这条标签 |

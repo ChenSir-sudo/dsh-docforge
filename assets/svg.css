@@ -135,3 +135,11 @@
 .dg .d-tl-axis   { fill: var(--ink-3); font-weight: 600; }
 .dg .d-fn-drop   { fill: var(--c-red-ink); font-weight: 600; }
 .dg .d-tl-tick   { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; }
+
+/* A node that hosts a nested figure reads as a container, not as a step:
+   a tinted ground and a firm border, so the inner diagram's own boxes still
+   read as the foreground. */
+.dg .d-embed {
+  fill: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+  stroke: var(--line-strong); stroke-width: 1.3;
+}

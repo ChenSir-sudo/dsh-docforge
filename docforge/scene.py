@@ -14,6 +14,8 @@ rather than heuristic: they use the same width estimates the layout used.
 
 from __future__ import annotations
 
+import hashlib
+import re
 from dataclasses import dataclass, field
 
 from . import text as T
@@ -67,18 +69,43 @@ class Item:
         }
 
 
+def _id_namespace(uid: str) -> str:
+    """An id-safe namespace for one scene's SVG markers.
+
+    Kept readable when the uid already is one, so a top-level figure's output is
+    unchanged; suffixed with a short digest only when it is not.
+    """
+    text = str(uid)
+    safe = re.sub(r"[^A-Za-z0-9_-]", "-", text)
+    if safe == text and text:
+        return safe
+    return f"{safe}-{hashlib.sha1(text.encode('utf-8')).hexdigest()[:6]}"
+
+
 class Scene:
     """A single diagram."""
 
     def __init__(self, uid: str, width: float, height: float,
-                 title: str = "", description: str = "", pad: float = DEFAULT_PAD):
+                 title: str = "", description: str = "", pad: float = DEFAULT_PAD,
+                 marker_ns: str = None):
         self.uid = uid
+        #: SVG ids are referenced with `url(#...)`, so they must survive being
+        #: an NCName-ish token. A nested figure's uid is a *path* like
+        #: `outer/inner`, which is readable in a finding but not usable as an
+        #: id -- and two nested figures must not share marker ids or their
+        #: arrowheads take each other's colour. Top-level ids are already safe,
+        #: so they pass through unchanged and existing documents do not churn.
+        self.marker_ns = marker_ns or _id_namespace(uid)
         self.width = float(width)
         self.height = float(height)
         self.title = title
         self.description = description
         self.pad = pad
         self.items: list = []
+        #: Nested figures, keyed by the node that holds them. The validator
+        #: walks these so a misplaced element inside a nested figure is still
+        #: reported -- labelled with the path it lives at.
+        self.children: dict = {}
         self._parts: list = []
         self._ids: set = set()
         self._n = 0
@@ -289,9 +316,9 @@ class Scene:
         cls = f"dg-e e-{kind}" + (" dash" if dashed else "")
         attrs = f'class="{cls}" d="{d}" fill="none"'
         if head:
-            attrs += f' marker-end="url(#m{self.uid}-{kind})"'
+            attrs += f' marker-end="url(#m{self.marker_ns}-{kind})"'
         if tail:
-            attrs += f' marker-start="url(#m{self.uid}-{kind})"'
+            attrs += f' marker-start="url(#m{self.marker_ns}-{kind})"'
         self.raw(f"<path {attrs}/>")
 
         boxes = []
@@ -342,7 +369,7 @@ class Scene:
         pts = arc_points(cx, cy, rx, ry, a0, a1, steps)
         d = (f"M {pts[0][0]:.1f} {pts[0][1]:.1f} A {rx:g} {ry:g} 0 "
              f"{1 if abs(a1 - a0) > 180 else 0} 1 {pts[-1][0]:.1f} {pts[-1][1]:.1f}")
-        hd = f' marker-end="url(#m{self.uid}-{kind})"' if head else ""
+        hd = f' marker-end="url(#m{self.marker_ns}-{kind})"' if head else ""
         self.raw(f'<path class="dg-e e-{kind}" d="{d}" fill="none"{hd}/>')
         return self._register(Item(
             kind="arc", bbox=rect_from_points(pts).inflate(2), pts=tuple(pts),
@@ -489,6 +516,51 @@ class Scene:
                   "lines": [t for t in (value, label) if t]},
         ))
 
+    def embed(self, x, y, w, h, title, sub_scene, kind="default", id=None,
+              fs=13.5, pad=12.0, head_h=None):
+        """A node that *contains* another figure.
+
+        The nested scene is drawn into this box at its own intrinsic size and
+        inside its own coordinate space -- no scaling, because scaling a figure
+        scales its type with it. Its id namespace already carries the path, so
+        its markers cannot collide with a sibling's.
+        """
+        title = str(title) if title else ""
+        head = head_h if head_h is not None else (fs + 14.0 if title else 0.0)
+        self.raw(f'<g class="nd k-{kind}">')
+        self.raw(
+            f'<rect class="d-box d-embed" x="{x:g}" y="{y:g}" width="{w:g}" '
+            f'height="{h:g}" rx="12"/>'
+        )
+        boxes = []
+        if title:
+            self.raw(
+                f'<text class="d-t" x="{x + pad:g}" y="{y + head / 2.0:.1f}" '
+                f'dominant-baseline="central" style="font-size:{fs:g}px">{esc(title)}</text>'
+            )
+            boxes.append(Rect(x + pad, y + head / 2.0 - fs / 2.0, T.tw(title, fs), fs))
+        # Two different regions, and conflating them is a real bug: `inner` is
+        # where this item's *text* may live (so it has to contain the title),
+        # while the nested figure gets its own box underneath the title.
+        content = Rect(x + pad, y + head + pad, max(0.0, w - 2 * pad),
+                       max(0.0, h - head - 2 * pad))
+        if sub_scene is not None:
+            sw, sh = sub_scene.width, sub_scene.height
+            self.raw(f'<g transform="translate({content.x:g} {content.y:g})">')
+            self.raw(sub_scene.fragment())
+            self.raw("</g>")
+        else:
+            sw = sh = 0.0
+        self.raw("</g>")
+        return self._register(Item(
+            kind="embed", bbox=Rect(x, y, w, h),
+            inner=Rect(x + pad, y + 4, max(0.0, w - 2 * pad), max(0.0, h - 8)),
+            text_boxes=boxes, id=id or self._auto_id(),
+            meta={"kind": kind, "label": title, "lines": [title] if title else [],
+                  "content_size": (sw, sh), "content_box": content,
+                  "child": sub_scene},
+        ))
+
     def tag(self, x, y, label, kind="line", anchor="middle", fs=11.0, pad=7.0,
             id=None):
         label = str(label)
@@ -555,13 +627,23 @@ class Scene:
         parts = ["<defs>"]
         for k in KINDS:
             parts.append(
-                f'<marker id="m{self.uid}-{k}" viewBox="0 0 10 10" refX="9.2" refY="5" '
+                f'<marker id="m{self.marker_ns}-{k}" viewBox="0 0 10 10" refX="9.2" refY="5" '
                 f'markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" '
                 f'orient="auto-start-reverse">'
                 f'<path class="ah-{k}" d="M 0.6 0.6 L 9.4 5 L 0.6 9.4 z"/></marker>'
             )
         parts.append("</defs>")
         return "".join(parts)
+
+    def fragment(self) -> str:
+        """Everything except the ``<svg>`` wrapper, for use inside another scene.
+
+        A nested ``<svg>`` opens a new viewport and scales the child to fit --
+        which shrinks its type along with it. A ``<g>`` places it 1:1 in the
+        parent's coordinate space, and the child's own ``<defs>`` travel with it
+        so its markers resolve.
+        """
+        return self._defs() + "".join(self._parts)
 
     def svg(self, cls="dg", standalone=False, palette=None, svg_css=None) -> str:
         style = ""

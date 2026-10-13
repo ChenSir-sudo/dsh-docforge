@@ -14,7 +14,11 @@ from __future__ import annotations
 
 import json
 import re
+import pathlib
 import unittest
+
+from docforge import specs
+from docforge import validate as V
 from pathlib import Path
 
 from docforge import ROOT
@@ -125,3 +129,23 @@ class ShippedExamplesAreValidTest(unittest.TestCase):
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
+
+
+class NestedFigureTest(unittest.TestCase):
+    """The shipped nesting example must stay valid, and stay nested."""
+
+    ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+    def test_it_checks_clean(self):
+        spec = specs.load(self.ROOT / "examples" / "nested-figure.json")
+        self.assertEqual([], V.check_scene(specs.render(spec)))
+
+    def test_it_actually_nests_two_figures(self):
+        spec = specs.load(self.ROOT / "examples" / "nested-figure.json")
+        sc = specs.render(spec)
+        self.assertEqual(2, len(sc.children),
+                         "the example exists to demonstrate nesting")
+
+    def test_the_shipped_markdown_documents_it(self):
+        skill = (self.ROOT / "SKILL.md").read_text()
+        self.assertIn("sub_spec", skill)

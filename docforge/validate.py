@@ -46,7 +46,7 @@ ERROR_CODES = (
     "duplicate-id", "dangling-anchor", "figure-missing", "figure-spec-missing",
     "figure-spec-invalid", "figure-render-failed", "toc-anchor-missing",
     # connector overlaps that no other rule covers
-    "edge-over-label",
+    "edge-over-label", "embed-overflow",
 )
 WARNING_CODES = (
     "edge-crossing", "isolated-node", "band-overlap", "no-figures",
@@ -55,7 +55,7 @@ WARNING_CODES = (
 ALL_CODES = ERROR_CODES + WARNING_CODES
 _ORDER = {ERROR: 0, WARNING: 1, INFO: 2}
 
-BOX_KINDS = ("node", "card", "tag", "cell", "bar", "funnel")
+BOX_KINDS = ("node", "card", "tag", "cell", "bar", "funnel", "embed")
 LABEL_KINDS = ("edge", "text")
 
 
@@ -108,6 +108,13 @@ def check_scene(scene, overflow_tol=2.0, clearance=1.0, check_crossings=True,
     _check_overlap(scene, boxes, out)
     _check_band_overlap(scene, bands, out)
     _check_edges(scene, items, boxes, clearance, out)
+    _check_embeds(scene, items, out)
+    for child in (getattr(scene, "children", None) or {}).values():
+        # A nested figure is checked in its own right, in its own coordinates.
+        # Nesting is not a way to get a diagram past the validator: the findings
+        # simply arrive labelled with the path they came from.
+        out.extend(check_scene(child, overflow_tol, clearance, check_crossings,
+                               check_isolated, check_short))
     _check_detached(scene, items, boxes, out)
     _check_labels(scene, items, boxes, bands, out)
     _check_edges_over_labels(scene, items, out)
@@ -275,6 +282,37 @@ legitimate stylistic choice.
 
 Sequence diagrams opt out entirely — see ``Scene.allow_detached``.
 """
+
+
+def _check_embeds(scene, items, out, tol=0.5):
+    """A nested figure must fit the box it was given.
+
+    The alternative is a sub-diagram quietly cropped at the edge of its parent,
+    which looks deliberate and is not.
+    """
+    for it in items:
+        if it.kind != "embed":
+            continue
+        sw, sh = it.meta.get("content_size") or (0.0, 0.0)
+        if sw <= 0 and sh <= 0:
+            continue
+        inner = it.meta.get("content_box") or it.inner
+        if inner is None:
+            continue
+        over_x = max(0.0, sw - inner.w)
+        over_y = max(0.0, sh - inner.h)
+        if over_x <= tol and over_y <= tol:
+            continue
+        out.append(Finding(
+            "embed-overflow", ERROR,
+            f"nested figure {it.meta.get('label') or it.id!r} needs "
+            f"{sw:.0f}x{sh:.0f} but was given {inner.w:.0f}x{inner.h:.0f}",
+            figure=scene.uid, item=it.id,
+            detail={"needed": [round(sw, 1), round(sh, 1)],
+                    "given": [round(inner.w, 1), round(inner.h, 1)],
+                    "overflow_x_px": round(over_x, 1),
+                    "overflow_y_px": round(over_y, 1)},
+        ))
 
 
 def _check_detached(scene, items, boxes, out, tol=DETACH_TOL):

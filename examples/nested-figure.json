@@ -1,0 +1,25 @@
+{
+  "id": "nesting", "layout": "dag", "title": "嵌套：一个节点里放一张图",
+  "kind": "架构图", "size": [1360, 520],
+  "nodes": [
+    {"id": "in", "title": "请求", "kind": "slate"},
+    {"id": "retrieval", "title": "检索子系统",
+     "sub_spec": {"id": "r", "layout": "pipeline", "size": [620, 150],
+       "nodes": [{"id": "q", "title": "构建 query", "kind": "slate"},
+                 {"id": "s", "title": "检索", "kind": "indigo"},
+                 {"id": "g", "title": "重排", "kind": "teal"}],
+       "edges": [{"from": "q", "to": "s", "label": "top-k"}, {"from": "s", "to": "g"}]},
+     "kind": "indigo"},
+    {"id": "answer", "title": "生成与输出",
+     "sub_spec": {"id": "a", "layout": "state", "size": [560, 240],
+       "rows": [["draft", "review"], ["human"]],
+       "nodes": [{"id": "draft", "title": "起草", "kind": "teal"},
+                 {"id": "review", "title": "自评", "kind": "violet"},
+                 {"id": "human", "title": "人工", "kind": "amber"}],
+       "transitions": [{"from": "draft", "to": "review", "label": "初稿"},
+                       {"from": "review", "to": "human", "label": "不确定"}]},
+     "kind": "teal"}
+  ],
+  "edges": [{"from": "in", "to": "retrieval"}, {"from": "retrieval", "to": "answer"}],
+  "options": {"width": 1360, "gap_y": 40}
+}

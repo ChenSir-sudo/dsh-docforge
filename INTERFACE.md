@@ -318,3 +318,20 @@ docforge skill-info [--json]
 Exit codes: `0` clean, `1` validation failed, `2` usage/IO error, `3` internal
 error. `skill-info --json` is the machine-readable capability descriptor a
 plugin wrapper or another agent should read first.
+
+---
+
+## 9. 嵌套（`sub_spec`）
+
+节点上的 `sub_spec` 是一份完整的图示规格。运行时在引擎跑之前**先递归渲染**它，
+把结果挂在节点的 `_embed` 上（`{scene, w, h, path}`）。因此：
+
+- `node_size` 能把宿主节点算成「标题 + 子图」，**所有引擎无需改动**就支持嵌套；
+- `render` 用 `Scene.embed` 画宿主，子图走 `Scene.fragment()`（不带 `<svg>` 外壳，
+  1:1 落在父坐标系里，不会被新视口缩放）；
+- `Scene.children` 挂住子场景，`check_scene` 会**递归校验**，problem 以子场景的
+  uid（即路径，如 `host/retrieval`）上报；
+- `Scene.marker_ns` 是 id 安全的命名空间。顶层 uid 本身合法就原样使用，
+  所以既有文档的 SVG 逐字节不变；含 `/` 的路径会加摘要后缀。
+
+约束：`EMBED_DEPTH = 4`；`embed-overflow` 在子图大于其内容区时报错。
