@@ -94,7 +94,13 @@ It is a warning, not an error, because a deliberately tight detail view is
 legitimate."""
 
 
-def check_scene(scene, overflow_tol=2.0, clearance=1.0, check_crossings=True,
+#: Flat part of the text-fit allowance, in px. The rest is `KERN_SLACK` per
+#: character -- see `_check_text`.
+DEFAULT_OVERFLOW_TOL = 2.0
+
+
+def check_scene(scene, overflow_tol=DEFAULT_OVERFLOW_TOL, clearance=1.0,
+                check_crossings=True,
                 check_isolated=True, check_short=True) -> list:
     """Return every finding for one scene, sorted by severity."""
     out: list = []
@@ -156,6 +162,16 @@ def _overflow_amount(bbox: Rect, canvas: Rect) -> float:
     )
 
 
+#: Kerning is the residual a per-glyph table cannot capture: the browser pulls
+#: certain pairs together, so the error grows with the number of characters
+#: rather than staying constant. Measured worst case is 0.019 em per glyph, but
+#: that is a *total* for a whole string, not a per-glyph budget -- the flat
+#: DEFAULT_OVERFLOW_TOL covers the rest. This term exists so a long label is
+#: allowed more than a short one; on the measured corpus the two together clear
+#: every case with headroom. Raising it would start absorbing real overflow.
+KERN_SLACK = 0.010
+
+
 def _check_text(scene, items, tol, out):
     """Text must fit the box that owns it."""
     for it in items:
@@ -166,8 +182,18 @@ def _check_text(scene, items, tol, out):
             continue
         lines = it.meta.get("lines") or []
         for idx, tb in enumerate(it.text_boxes):
+            line = lines[idx] if idx < len(lines) else ""
+            # A text box is as tall as its font size, which is how the kerning
+            # allowance knows how many px an em is worth here.
+            # `lines` and `text_boxes` are built in step by every primitive that
+            # draws text; TestTextRunAlignment keeps them from drifting apart.
+            # Kerning is a horizontal effect, so the per-character term widens
+            # the box left and right only. Adding it vertically would excuse
+            # genuine vertical overflow that no kerning explains.
+            room = tol + KERN_SLACK * tb.h * len(str(line))
             slack = Rect(
-                inner.x - tol, inner.y - tol, inner.w + 2 * tol, inner.h + 2 * tol
+                inner.x - room, inner.y - tol,
+                inner.w + 2 * room, inner.h + 2 * tol,
             )
             if slack.contains_rect(tb):
                 continue

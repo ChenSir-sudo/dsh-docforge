@@ -38,6 +38,16 @@ class TextOverflowTest(unittest.TestCase):
     LABEL = "Overflow probe title"
     FS = 15.0
 
+    def allowance(self, label=None, fs=None):
+        """The slack the checker gives this label, straight from the model.
+
+        Hard-coding pixels here is what made these tests wrong the moment the
+        metric improved; asking the model keeps them honest.
+        """
+        label = self.LABEL if label is None else label
+        fs = self.FS if fs is None else fs
+        return V.DEFAULT_OVERFLOW_TOL + V.KERN_SLACK * fs * len(label)
+
     def _scene(self, slack_px):
         """A left-aligned node whose inner width is the label width + slack."""
         sc = _scene("ovf", 400, 200)
@@ -50,22 +60,24 @@ class TextOverflowTest(unittest.TestCase):
         self.assertAlmostEqual(it.text_boxes[0].w, it.inner.w)
         self.assertNotIn("text-overflow", codes(sc))
 
-    def test_text_six_px_over_the_limit_fails(self):
-        sc, it = self._scene(-6.0)
+    def test_text_past_the_allowance_fails(self):
+        over = self.allowance() + 4.0
+        sc, it = self._scene(-over)
         hits = findings(sc, "text-overflow")
         self.assertEqual(len(hits), 1)
-        self.assertAlmostEqual(hits[0].detail["overflow_x_px"], 6.0, delta=0.01)
+        self.assertAlmostEqual(hits[0].detail["overflow_x_px"], over, delta=0.01)
         self.assertEqual(hits[0].severity, V.ERROR)
         self.assertEqual(hits[0].item, it.id)
         self.assertEqual(hits[0].figure, sc.uid)
 
     def test_centred_title_splits_the_overflow_over_both_sides(self):
+        over = self.allowance() + 6.0
         sc = _scene("ovf-c", 400, 200)
-        sc.node(20, 20, 2 * 12.0 + T.tw(self.LABEL, self.FS) - 6.0, 60,
-                self.LABEL, fs=self.FS)  # centred: 3px each side
+        sc.node(20, 20, 2 * 12.0 + T.tw(self.LABEL, self.FS) - over, 60,
+                self.LABEL, fs=self.FS)          # centred: half each side
         hits = findings(sc, "text-overflow")
         self.assertEqual(len(hits), 1)
-        self.assertAlmostEqual(hits[0].detail["overflow_x_px"], 3.0, delta=0.01)
+        self.assertAlmostEqual(hits[0].detail["overflow_x_px"], over / 2.0, delta=0.01)
 
     def test_vertical_overflow_fails(self):
         sc = _scene("ovf-v", 400, 200)
@@ -87,17 +99,22 @@ class TextOverflowTest(unittest.TestCase):
         sc.band(0, 0, 400, 300, label="a band label that is quite long indeed")
         self.assertNotIn("text-overflow", codes(sc))
 
-    def test_small_bleed_is_absorbed_by_the_tolerance(self):
-        sc = _scene("ovf-t", 400, 200)
-        sc.node(20, 20, 24 + T.tw(self.LABEL, self.FS) - 3.0, 60, self.LABEL,
-                fs=self.FS)  # 1.5px of bleed on each side
+    def test_a_bleed_inside_the_allowance_is_absorbed(self):
+        """Kerning means the estimate can be a little wide; that is not a defect."""
+        inside = max(0.0, self.allowance() - 2.0)
+        sc, _ = self._scene(-inside)
         self.assertNotIn("text-overflow", codes(sc))
-        self.assertIn("text-overflow", codes(sc, overflow_tol=1.0))
+
+    def test_the_allowance_grows_with_the_string(self):
+        """A fix is fine on a 5-character label and not on a 40-character one."""
+        self.assertGreater(self.allowance("a much longer probe label here"),
+                           self.allowance("short"))
 
     def test_overflow_tolerance_is_configurable(self):
-        sc, _ = self._scene(-6.0)
-        self.assertIn("text-overflow", codes(sc, overflow_tol=2.0))
-        self.assertNotIn("text-overflow", codes(sc, overflow_tol=50.0))
+        over = self.allowance() + 4.0
+        sc, _ = self._scene(-over)
+        self.assertIn("text-overflow", codes(sc, overflow_tol=V.DEFAULT_OVERFLOW_TOL))
+        self.assertNotIn("text-overflow", codes(sc, overflow_tol=200.0))
 
 
 # --------------------------------------------------------------------------
@@ -661,3 +678,39 @@ class CheckDocumentTest(unittest.TestCase):
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
+
+
+class TextRunAlignmentTest(unittest.TestCase):
+    """`text_boxes` and `meta["lines"]` are parallel arrays built in step.
+
+    The overflow check indexes one with the other, so a primitive that appends
+    to one and not the other would mis-attribute text to a box -- silently, and
+    only for the primitive that got it wrong. This pins the invariant.
+    """
+
+    def test_every_item_has_one_line_per_text_box(self):
+        sc = _scene("align", 900, 700)
+        sc.node(20, 20, 200, 60, "Title", ["sub one", "sub two"])
+        sc.card(20, 120, 220, 120, "Card", "sub", ["a", "b", "c"])
+        sc.band(20, 280, 400, 160, label="Band", sub="band sub")
+        sc.tag(20, 460, "tag label", fs=12)
+        sc.cell(300, 20, 140, 90, value="12", label="cell")
+        sc.bar(300, 140, 200, 30, "bar label")
+        sc.embed(300, 200, 300, 200, "host", None)
+        for it in sc.items:
+            if not it.text_boxes:
+                continue
+            self.assertEqual(
+                len(it.text_boxes), len(it.meta.get("lines") or []),
+                f"{it.kind} {it.id!r} has {len(it.text_boxes)} text boxes but "
+                f"{len(it.meta.get('lines') or [])} lines",
+            )
+
+
+class SpeaksCoversEveryBoxKindTest(unittest.TestCase):
+    """The accessible description must mention every kind the checker boxes."""
+
+    def test_every_box_kind_is_described(self):
+        from docforge.scene import Scene
+        missing = [k for k in V.BOX_KINDS if k not in Scene._SPEAKS]
+        self.assertEqual([], missing, f"undescribed box kinds: {missing}")

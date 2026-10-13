@@ -108,12 +108,21 @@ def _screenshot_lock(wait: float = LOCK_WAIT):
         os.close(fh)
 
 
-def _kill_group(proc, grace: float = 10.0) -> None:
-    """Kill a browser and everything it spawned."""
+def _kill_group(proc, grace: float = 10.0, pgid: int = None) -> None:
+    """Kill a browser and everything it spawned.
+
+    *pgid* should be the group captured when the process was started. Asking the
+    OS for it here is too late in the common case: the group leader exits as
+    soon as it has written the screenshot, `getpgid` then raises, and the helper
+    processes -- which are what actually pile up and hold the GPU pipe --
+    survive. Twenty-eight renders left fourteen of them behind.
+    """
     try:
-        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        os.killpg(pgid if pgid is not None else os.getpgid(proc.pid),
+                  signal.SIGKILL)
     except (ProcessLookupError, PermissionError, OSError):
-        proc.kill()
+        with contextlib.suppress(OSError):
+            proc.kill()
     try:
         proc.communicate(timeout=grace)
     except Exception:                                  # already gone, or wedged
@@ -156,11 +165,22 @@ def shot(html_path, png_path, width=1440, height=2400, scale=2.0,
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
                                     start_new_session=True)
+            # Capture the group now, while the leader is certainly alive.
+            pgid = None
+            with contextlib.suppress(OSError):
+                pgid = os.getpgid(proc.pid)
             try:
                 proc.communicate(timeout=timeout)
             except subprocess.TimeoutExpired as exc:
-                _kill_group(proc)
+                _kill_group(proc, pgid=pgid)
                 raise RenderError(f"browser timed out after {timeout}s") from exc
+            finally:
+                # Chromium leaves helper processes behind when the main process
+                # exits. The screenshot is already written by now, so sweep the
+                # whole group: without this they accumulate, each holds a GPU
+                # pipe, and a long run (28 figures) slows to a crawl against
+                # processes it started itself.
+                _kill_group(proc, grace=1.0, pgid=pgid)
     if not png_path.is_file():
         raise RenderError("browser produced no screenshot")
     return png_path

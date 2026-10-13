@@ -1,3 +1,17 @@
+:root, .dg {
+  /* Referenced since the beginning and never defined, so every
+     `font-family: var(--sans)` was an invalid declaration that got dropped and
+     fell back to inheritance. That looked fine inside a document -- the SVG
+     inherits the body font -- and silently changed face in a standalone .svg
+     export, which inherits nothing. Defined once, in the sheet both paths
+     share. */
+  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+}
+
 /* ------------------------------------------------------------- svg classes */
 .dg text { font-family: var(--sans); }
 .dg .d-box       { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.4; }
@@ -142,3 +156,12 @@
   fill: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
   stroke: var(--line-strong); stroke-width: 1.3;
 }
+
+/* Debug markers. Loud on purpose -- this is a diagnostic overlay, not part of
+   the document -- but still theme tokens, because this sheet is inlined into
+   every standalone SVG and a literal here would be a colour baked into output
+   the theme cannot reach. */
+.dg .mk-box   { fill: none; stroke: var(--mk); stroke-width: 1.6;
+                stroke-dasharray: 5 3; }
+.dg .mk-tag   { fill: var(--mk); }
+.dg .mk-tag-t { fill: var(--mk-ink); font-weight: 700; }

@@ -335,3 +335,17 @@ plugin wrapper or another agent should read first.
   所以既有文档的 SVG 逐字节不变；含 `/` 的路径会加摘要后缀。
 
 约束：`EMBED_DEPTH = 4`；`embed-overflow` 在子图大于其内容区时报错。
+
+---
+
+## 10. 调试：`fig --debug`
+
+```bash
+docforge fig figures/flow.json --debug -o debug.svg
+```
+
+渲染同一张图，并把校验器点名的每个元素**描红并在图上标出错误码**。报告说
+「node X 文字溢出」时，你不用再去图里找 X。
+
+`--debug` 隐含开启校验。标记用的颜色来自主题变量 `--mk` / `--mk-ink`，
+所以独立导出的 SVG 里也不会出现写死的色值。

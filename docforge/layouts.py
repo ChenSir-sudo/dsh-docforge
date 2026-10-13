@@ -144,7 +144,7 @@ def node_size(n: dict, fs=None, subfs=None, pad=NODE_PAD, vpad=NODE_VPAD):
     fs = float(n.get("fs", fs or 15.0))
     subfs = float(n.get("subfs", subfs or 11.5))
     subs = _subs(n)
-    widths = [T.tw(str(n.get("title", "")), fs)]
+    widths = [T.tw(str(n.get("title", "")), fs, T.BOLD)]
     widths += [T.tw(s, subfs) for s in subs]
     w = max(widths) + 2 * pad
     h = (fs + 6.0) + (subfs + 4.5) * len(subs) + 2 * vpad
@@ -158,7 +158,7 @@ def card_size(c: dict):
     ifs = float(c.get("ifs", 11.5))
     gap = c.get("gap") or (ifs + 6.5)
     pad = float(c.get("pad", 15.0))
-    widths = [T.tw(str(c.get("title", "")), fs)]
+    widths = [T.tw(str(c.get("title", "")), fs, T.BOLD)]
     if c.get("accent"):
         widths.append(T.tw(str(c["accent"]), subfs) * 2)
     if c.get("sub"):
@@ -1117,7 +1117,8 @@ def _matrix(spec) -> Plan:
                  max((int(n.get("row", 0)) + 1 for n in spec["nodes"]), default=1))
 
     # a gutter wide enough for the longest row header, a strip for the columns
-    gutter = (max(T.tw(t, lfs) for t in row_labels) + opts.get("gutter_pad", 18.0)
+    gutter = (max(T.tw(t, lfs, T.WEIGHT_HEAVY) for t in row_labels)
+              + opts.get("gutter_pad", 18.0)
               if row_labels else 0.0)
     head_h = opts.get("head_h", 34.0) if col_labels else 0.0
     usable = width - 2 * margin - gutter
@@ -1178,7 +1179,8 @@ def _timeline(spec) -> Plan:
                  max((int(n.get("row", 0)) + 1 for n in spec["nodes"]), default=1))
     span = float(max(1, len(axis) - 1))
 
-    gutter = (max(T.tw(t, lfs) for t in rows) + opts.get("gutter_pad", 18.0)
+    gutter = (max(T.tw(t, lfs, T.WEIGHT_HEAVY) for t in rows)
+              + opts.get("gutter_pad", 18.0)
               if rows else 0.0)
     head_h = opts.get("head_h", 30.0) if axis else 0.0
     track_x = margin + gutter
@@ -1401,7 +1403,7 @@ def embed_size(n, fs=13.5, pad=EMBED_PAD) -> tuple:
     title = str(n.get("title", ""))
     head = (fs + 14.0) if title else 0.0
     head = float(n.get("head_h", head))
-    tw = T.tw(title, fs) + 2 * pad if title else 0.0
+    tw = T.tw(title, fs, T.BOLD) + 2 * pad if title else 0.0
     return (max(tw, emb["w"] + 2 * pad), head + emb["h"] + 2 * pad)
 
 

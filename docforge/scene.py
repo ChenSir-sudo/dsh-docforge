@@ -164,7 +164,7 @@ class Scene:
         )
         cx = x + w / 2.0
         ty = top + tlh / 2.0
-        tw_ = T.tw(title, fs)
+        tw_ = T.tw(title, fs, T.BOLD)
         tx = cx if align == "center" else x + self.pad
         anchor = "middle" if align == "center" else "start"
         parts.append(
@@ -212,7 +212,7 @@ class Scene:
             f'<text class="d-t" x="{x + pad:g}" y="{cy:.1f}" '
             f'style="font-size:{fs:g}px" dominant-baseline="central">{esc(title)}</text>'
         )
-        boxes.append(Rect(x + pad, cy - fs / 2.0, T.tw(title, fs), fs))
+        boxes.append(Rect(x + pad, cy - fs / 2.0, T.tw(title, fs, T.BOLD), fs))
         if accent:
             aw = T.tw(accent, subfs)
             parts.append(
@@ -272,14 +272,14 @@ class Scene:
                 f'text-anchor="{anchor}" dominant-baseline="central" '
                 f'style="font-size:{fs:g}px">{esc(label)}</text>'
             )
-            lw = T.tw(label, fs)
+            lw = T.tw(label, fs, T.WEIGHT_HEAVY)
             boxes.append(Rect(ax - lw / 2 if anchor == "middle" else
                               (ax - lw if anchor == "end" else ax),
                               ay - fs / 2.0, lw, fs))
         if sub:
             sub = str(sub)
             sw = T.tw(sub, fs - 1.5)
-            sx = ax + T.tw(label, fs) + 16 if label else ax
+            sx = ax + T.tw(label, fs, T.WEIGHT_HEAVY) + 16 if label else ax
             self.raw(
                 f'<text class="d-sub" x="{sx:g}" y="{ay:g}" dominant-baseline="central" '
                 f'style="font-size:{fs - 1.5:g}px">{esc(sub)}</text>'
@@ -423,8 +423,8 @@ class Scene:
                 f'<text class="d-cell-l" x="{x + w / 2:g}" y="{ly:.1f}" text-anchor="middle" '
                 f'dominant-baseline="central" style="font-size:{lfs:g}px">{esc(label)}</text>'
             )
-            boxes.append(Rect(x + (w - T.tw(value, vfs)) / 2.0, vy - vfs / 2.0,
-                              T.tw(value, vfs), vfs))
+            boxes.append(Rect(x + (w - T.tw(value, vfs, T.WEIGHT_HEAVY)) / 2.0,
+                              vy - vfs / 2.0, T.tw(value, vfs, T.WEIGHT_HEAVY), vfs))
             boxes.append(Rect(x + (w - T.tw(label, lfs)) / 2.0, ly - lfs / 2.0,
                               T.tw(label, lfs), lfs))
         elif value or label:
@@ -436,8 +436,9 @@ class Scene:
                 f'x="{x + w / 2:g}" y="{cy:.1f}" text-anchor="middle" '
                 f'dominant-baseline="central" style="font-size:{fs:g}px">{esc(text)}</text>'
             )
-            boxes.append(Rect(x + (w - T.tw(text, fs)) / 2.0, cy - fs / 2.0,
-                              T.tw(text, fs), fs))
+            wt = T.WEIGHT_HEAVY if value else 400
+            boxes.append(Rect(x + (w - T.tw(text, fs, wt)) / 2.0,
+                              cy - fs / 2.0, T.tw(text, fs, wt), fs))
         self.raw("</g>")
         return self._register(Item(
             kind="cell", bbox=Rect(x, y, w, h), inner=inner,
@@ -460,7 +461,7 @@ class Scene:
         boxes = []
         extent = Rect(x, y, w, h)
         if label:
-            tw = T.tw(label, fs)
+            tw = T.tw(label, fs, T.BOLD)
             if tw <= w - 2 * pad:
                 cx, anchor = x + w / 2.0, "middle"
                 tb = Rect(cx - tw / 2.0, y + h / 2.0 - fs / 2.0, tw, fs)
@@ -516,8 +517,9 @@ class Scene:
                     f'x="{cx:g}" y="{ty:.1f}" text-anchor="middle" '
                     f'dominant-baseline="central" style="font-size:{fs_i:g}px">{esc(shown)}</text>'
                 )
-                boxes.append(Rect(cx - T.tw(shown, fs_i) / 2.0, ty - fs_i / 2.0,
-                                  T.tw(shown, fs_i), fs_i))
+                wt = T.WEIGHT_HEAVY if (i == 0 and value) else 400
+                boxes.append(Rect(cx - T.tw(shown, fs_i, wt) / 2.0,
+                                  ty - fs_i / 2.0, T.tw(shown, fs_i, wt), fs_i))
         self.raw("</g>")
         return self._register(Item(
             kind="funnel", bbox=Rect(cx - max(w_top, w_bottom) / 2.0, y,
@@ -550,7 +552,8 @@ class Scene:
                 f'<text class="d-t" x="{x + pad:g}" y="{y + head / 2.0:.1f}" '
                 f'dominant-baseline="central" style="font-size:{fs:g}px">{esc(title)}</text>'
             )
-            boxes.append(Rect(x + pad, y + head / 2.0 - fs / 2.0, T.tw(title, fs), fs))
+            boxes.append(Rect(x + pad, y + head / 2.0 - fs / 2.0,
+                              T.tw(title, fs, T.BOLD), fs))
         # Two different regions, and conflating them is a real bug: `inner` is
         # where this item's *text* may live (so it has to contain the title),
         # while the nested figure gets its own box underneath the title.
@@ -576,7 +579,7 @@ class Scene:
     def tag(self, x, y, label, kind="line", anchor="middle", fs=11.0, pad=7.0,
             id=None):
         label = str(label)
-        w = T.tw(label, fs) + pad * 2
+        w = T.tw(label, fs, T.BOLD) + pad * 2
         h = fs + 9
         rx = (x - w / 2) if anchor == "middle" else ((x - w) if anchor == "end" else x)
         self.raw(
@@ -647,6 +650,78 @@ class Scene:
         parts.append("</defs>")
         return "".join(parts)
 
+    #: Box-like kinds that carry meaning a reader would want described.
+    _SPEAKS = ("node", "card", "chip", "cell", "bar", "funnel", "embed", "tag")
+
+    def description_text(self) -> str:
+        """A sentence describing the diagram, for assistive technology.
+
+        The scene already knows every box and every connector; a figure that
+        only says "diagram" throws that away. Read aloud, this is the difference
+        between an image and its content.
+        """
+        boxes = [i for i in self.items if i.kind in self._SPEAKS]
+        named = {}
+        for i in boxes:
+            title = i.meta.get("title") or i.meta.get("label") or ""
+            named[i.id] = str(title) if title else ""
+        wires = []
+        for i in self.items:
+            if i.kind != "edge" or i.meta.get("decor"):
+                continue
+            ends = [e for e in (i.endpoints or ()) if e]
+            if len(ends) != 2:
+                continue
+            a, b = named.get(ends[0], ends[0]), named.get(ends[1], ends[1])
+            label = i.meta.get("label")
+            wires.append(f"{a} 到 {b}" + (f"（{label}）" if label else ""))
+        parts = [f"图示：{len(boxes)} 个元素"]
+        titles = [t for t in named.values() if t]
+        if titles:
+            shown = "、".join(titles[:8])
+            parts.append(f"包含 {shown}" + ("等" if len(titles) > 8 else ""))
+        if wires:
+            parts.append(f"{len(wires)} 条连线：" + "；".join(wires[:8])
+                         + ("等" if len(wires) > 8 else ""))
+        # Nested figures are a property of the diagram, not a connector; saying
+        # so in the wire list made the count wrong.
+        if self.children:
+            parts.append(f"其中 {len(self.children)} 个节点内含子图")
+        return "。".join(parts) + "。"
+
+    def mark_findings(self, findings) -> int:
+        """Draw a marker on every item a finding names.
+
+        The checker reports "text-overflow on node X" and leaves you to find X.
+        This is the other half of the promise: it says where. Drawn last, so it
+        sits on top of whatever it is pointing at.
+        """
+        by_item = {}
+        for f in findings:
+            if getattr(f, "item", None):
+                by_item.setdefault(f.item, []).append(f)
+        marked = 0
+        for item in self.items:
+            hits = by_item.get(item.id)
+            if not hits:
+                continue
+            marked += 1
+            b = item.bbox
+            self.raw(
+                f'<rect class="mk-box" x="{b.x - 3:g}" y="{b.y - 3:g}" '
+                f'width="{b.w + 6:g}" height="{b.h + 6:g}" rx="6"/>'
+            )
+            codes = "+".join(sorted({f.code for f in hits}))
+            ty = max(9.0, b.y - 9.0)
+            w = T.tw(codes, 10.0, T.WEIGHT_HEAVY) + 16.0
+            self.raw(
+                f'<rect class="mk-tag" x="{b.x - 3:g}" y="{ty - 7.0:g}" '
+                f'width="{w:g}" height="14" rx="4"/>'
+                f'<text class="mk-tag-t" x="{b.x + 3:g}" y="{ty:g}" '
+                f'dominant-baseline="central" style="font-size:10px">{esc(codes)}</text>'
+            )
+        return marked
+
     def fragment(self) -> str:
         """Everything except the ``<svg>`` wrapper, for use inside another scene.
 
@@ -662,10 +737,22 @@ class Scene:
         if standalone and palette and svg_css:
             tokens = "".join(f"--{k}:{v};" for k, v in palette.items())
             style = f"<style>:root{{{tokens}}}{svg_css}</style>"
-        label = esc(self.description or self.title or "diagram")
+        # A titled, described image rather than a black box. aria-labelledby
+        # points at both, so a screen reader gets the caption and the content.
+        tid = f"{self.marker_ns}-t"
+        did = f"{self.marker_ns}-d"
+        # An explicit description is the author speaking; keep it and append the
+        # structure. Dropping it would lose what the spec actually said.
+        described = self.description_text()
+        if self.description and self.description not in described:
+            said = self.description.rstrip("。. ")
+            described = f"{said}。{described}" if said else described
+        head = (f'<title id="{tid}">{esc(self.title or "图示")}</title>'
+                f'<desc id="{did}">{esc(described)}</desc>')
         return (
             f'<svg class="{cls}" viewBox="0 0 {self.width:g} {self.height:g}" '
-            f'preserveAspectRatio="xMidYMid meet" role="img" aria-label="{label}" '
+            f'preserveAspectRatio="xMidYMid meet" role="img" '
+            f'aria-labelledby="{tid} {did}" '
             f'xmlns="http://www.w3.org/2000/svg">'
-            + style + self._defs() + "".join(self._parts) + "</svg>"
+            + style + head + self._defs() + "".join(self._parts) + "</svg>"
         )

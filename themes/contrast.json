@@ -38,7 +38,9 @@
     "--c-ink-bg": "#e8e8e8",
     "--c-ink-ink": "#000000",
     "--shadow-sm": "none",
-    "--shadow-md": "none"
+    "--shadow-md": "none",
+    "--mk": "#ff2d55",
+    "--mk-ink": "#ffffff"
   },
   "dark": {
     "--bg": "#000000",
@@ -76,6 +78,8 @@
     "--c-ink-bg": "#1c1c1c",
     "--c-ink-ink": "#f0f0f0",
     "--shadow-sm": "none",
-    "--shadow-md": "none"
+    "--shadow-md": "none",
+    "--mk": "#ff2d55",
+    "--mk-ink": "#ffffff"
   }
 }

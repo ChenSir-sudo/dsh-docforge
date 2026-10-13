@@ -86,6 +86,8 @@ def build_parser() -> argparse.ArgumentParser:
     f.add_argument("--scale", type=float, default=2.0)
     f.add_argument("--check", action="store_true", default=True)
     f.add_argument("--no-check", dest="check", action="store_false")
+    f.add_argument("--debug", action="store_true",
+                   help="把校验发现的问题画在图上，指出是哪个元素")
     f.add_argument("--fail-on", choices=("error", "warning", "none"), default="error")
     f.add_argument("--format", choices=("text", "json"), default="text")
     f.add_argument("-q", "--quiet", action="store_true",
@@ -161,12 +163,19 @@ def cmd_fig(args) -> int:
         print(f"docforge: failed to render {args.figure}: {exc}", file=sys.stderr)
         return EXIT_INTERNAL
 
-    findings = V.check_scene(scene, check_crossings=True) if args.check else []
+    if args.debug:
+        # Marking implies checking: there is nothing to point at otherwise.
+        findings = V.check_scene(scene, check_crossings=True)
+    else:
+        findings = V.check_scene(scene, check_crossings=True) if args.check else []
     try:
         theme = Theme.load(args.theme)
     except ThemeError as exc:
         print(f"docforge: {exc}", file=sys.stderr)
         return EXIT_USAGE
+
+    if args.debug:
+        scene.mark_findings(findings)
 
     svg = (scene.svg(standalone=True, palette=theme.palette(args.mode),
                      svg_css=theme.svg_css())

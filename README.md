@@ -251,6 +251,27 @@ sh tools/test.sh                   # unit + end-to-end (POSIX sh, not python)
 python3 -m unittest discover -s tests -t . -v
 ```
 
+When `check` names an element you cannot find, render the same figure with the
+findings drawn on it:
+
+```bash
+docforge fig figures/flow.json --debug -o debug.svg
+```
+
+Two optional tools need a browser, and both say so rather than passing quietly:
+
+```bash
+sh tools/golden.sh                 # compare every shipped figure against a recorded render
+sh tools/golden.sh --update        # re-record the baselines
+python3 tools/measure-text.py      # compare the width estimate with real glyphs
+```
+
+`golden.sh` exists because the validator proves the *geometry* is sound and
+nothing proved the figures still **look** right — a stylesheet change could break
+every one of them with the whole suite green. `measure-text.py` exists because
+the validator trusts a width table, and that table is only as good as the
+measurement behind it.
+
 Five groups:
 
 - **Geometry and metrics** (`test_geom` / `test_text`) — segment intersection, rect

@@ -63,7 +63,14 @@ class ShotContractTest(unittest.TestCase):
         import inspect
         src = inspect.getsource(R.shot)
         self.assertIn("start_new_session=True", src)
-        self.assertIn("_kill_group(proc)", src)
+        self.assertIn("_kill_group(proc", src)
+        # The group must be captured while the leader is alive: asking for it
+        # after the process exits raises, and the helpers -- which are what pile
+        # up -- are exactly the ones that then survive.
+        self.assertIn("pgid = os.getpgid(proc.pid)", src)
+        self.assertLess(src.index("pgid = os.getpgid(proc.pid)"),
+                        src.index("proc.communicate(timeout=timeout)"),
+                        "capture the group before waiting, not after")
 
     def test_a_missing_browser_is_reported_not_crashed(self):
         with self.assertRaises(R.RenderError):

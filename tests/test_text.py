@@ -19,11 +19,13 @@ class UnitsTest(unittest.TestCase):
         self.assertAlmostEqual(T.units("\u4e2d"), 1.0)
 
     def test_latin_counts_narrow_per_character(self):
-        self.assertAlmostEqual(T.units("abc"), 3 * 0.55)
-        self.assertAlmostEqual(T.units("A"), 0.55)
+        self.assertAlmostEqual(T.units("abc"),
+                               sum(T._ADVANCE[c] for c in "abc"))
+        self.assertAlmostEqual(T.units("A"), T._ADVANCE["A"])
 
     def test_mixed_adds_both(self):
-        self.assertAlmostEqual(T.units("a\u4e2db"), 0.55 + 1.0 + 0.55)
+        self.assertAlmostEqual(
+            T.units("a\u4e2db"), T._ADVANCE["a"] + 1.0 + T._ADVANCE["b"])
         self.assertAlmostEqual(
             T.units("ab\u4e2d\u6587c"), T.units("ab") + T.units("\u4e2d\u6587c")
         )
@@ -259,3 +261,84 @@ class BlockHeightTest(unittest.TestCase):
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
+
+
+class MeasuredAdvanceTest(unittest.TestCase):
+    """The advance table replaced a single constant. Guard what that means."""
+
+    def test_every_printable_ascii_glyph_has_a_measured_advance(self):
+        missing = [chr(c) for c in range(32, 127) if chr(c) not in T._ADVANCE]
+        self.assertEqual([], missing, "the table must cover printable ASCII")
+
+    def test_the_table_is_not_a_single_constant_in_disguise(self):
+        """`l` and `W` differ by more than 4x in any sans face."""
+        self.assertGreater(T._ADVANCE["W"] / T._ADVANCE["l"], 3.0)
+
+    def test_a_narrow_glyph_is_narrower_than_the_fallback(self):
+        self.assertLess(T.units("l"), T.NARROW)
+        self.assertGreater(T.units("W"), T.NARROW)
+
+    def test_an_uncovered_codepoint_uses_the_fallback(self):
+        """Accented Latin, Greek, symbols: approximated, not ignored."""
+        self.assertAlmostEqual(T.units("\u00e9"), T.NARROW)      # e-acute
+        self.assertAlmostEqual(T.units("\u03b1"), T.NARROW)      # alpha
+        self.assertAlmostEqual(T.units("\u20ac"), T.NARROW)      # euro
+
+    def test_the_fallback_is_near_the_measured_latin_mean(self):
+        latin = [v for k, v in T._ADVANCE.items() if k.isalpha()]
+        self.assertAlmostEqual(sum(latin) / len(latin), T.NARROW, delta=0.06)
+
+    def test_bold_text_is_wider_than_regular(self):
+        self.assertGreater(T.tw("Intent", 14, 600), T.tw("Intent", 14, 400))
+        self.assertGreater(T.tw("Intent", 14, 700), T.tw("Intent", 14, 600))
+
+    def test_weight_multipliers_match_what_was_measured(self):
+        """600 measured ~1.05x, 700 ~1.08x; anything looser would hide overflow."""
+        self.assertAlmostEqual(1.05, T.BOLD, delta=0.02)
+        self.assertAlmostEqual(1.08, T.HEAVY, delta=0.02)
+
+    def test_cjk_is_full_width_and_weight_does_not_change_it(self):
+        """A CJK glyph is one em wide whatever the weight.
+
+        Scaling it by the Latin multiplier over-reserved every bold Chinese
+        title by 5-8% -- the same class of error the table exists to fix.
+        """
+        for weight in (400, 600, 700):
+            self.assertAlmostEqual(2.0, T.units("\u72b6\u6001", weight))
+
+    def test_bold_cjk_and_bold_latin_differ_in_the_right_direction(self):
+        self.assertGreater(T.tw("Intent", 14, 700), T.tw("Intent", 14, 400))
+        self.assertAlmostEqual(T.tw("\u72b6\u6001", 14, 700),
+                               T.tw("\u72b6\u6001", 14, 400))
+
+
+class OneWidthDecisionTest(unittest.TestCase):
+    """`truncate` and `wrap` must agree with the metric `tw` reports.
+
+    They used to compute advances themselves with a flat constant, so the
+    layout could believe it had truncated text that the validator -- measuring
+    with `tw` -- then reported as overflow.
+    """
+
+    SAMPLES = ("WWWWWWWWWW", "retrieval_context_of_the_agent",
+               "\u72b6\u6001 State \u4e0e\u56fe\u84dd\u56fe", "abcdefghij klmnop")
+
+    def test_truncation_honours_the_budget(self):
+        for s in self.SAMPLES:
+            for budget in (30.0, 60.0, 120.0, 200.0):
+                out = T.truncate(s, 12, budget)
+                self.assertLessEqual(T.tw(out, 12), budget + 1e-6,
+                                     f"truncate({s!r}, {budget}) gave {out!r}")
+
+    def test_every_wrapped_line_honours_the_budget(self):
+        for s in self.SAMPLES:
+            for budget in (30.0, 60.0, 120.0):
+                for line in T.wrap(s, 12, budget):
+                    self.assertLessEqual(T.tw(line, 12), budget + 1e-6,
+                                         f"wrap({s!r}, {budget}) gave {line!r}")
+
+    def test_char_width_is_the_only_place_that_decides(self):
+        for ch in ("a", "W", "\u72b6", " "):
+            for weight in (400, 600, 700):
+                self.assertAlmostEqual(T.char_width(ch, 1.0, weight),
+                                       T.units(ch, weight))

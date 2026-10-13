@@ -125,6 +125,15 @@ def validate_spec(spec: dict) -> list:
     return out
 
 
+def _scene_svg(scene, theme, mode, standalone) -> str:
+    if standalone:
+        theme = theme or Theme.load("paper")
+        return _with_background(
+            scene.svg(standalone=True, palette=theme.palette(mode),
+                      svg_css=_svg_css()), scene)
+    return scene.svg()
+
+
 def render(spec) -> Scene:
     """Spec (dict or path) -> a fully drawn :class:`~docforge.scene.Scene`."""
     if not isinstance(spec, dict):
@@ -133,13 +142,7 @@ def render(spec) -> Scene:
 
 
 def render_svg(spec, theme=None, mode="light", standalone=False) -> str:
-    scene = render(spec)
-    if standalone:
-        theme = theme or Theme.load("paper")
-        svg = scene.svg(standalone=True, palette=theme.palette(mode),
-                        svg_css=_svg_css())
-        return _with_background(svg, scene)
-    return scene.svg()
+    return _scene_svg(render(spec), theme, mode, standalone)
 
 
 def _with_background(svg: str, scene) -> str:

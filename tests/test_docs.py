@@ -67,7 +67,17 @@ class DocumentedExamplesAreRealTest(unittest.TestCase):
         for name, sub in subs.items():
             declared = set(re.findall(rf"docforge {name}\s+.*?(?=\ndocforge|\Z)",
                                       INTERFACE, re.S))
-            flags_in_doc = set(re.findall(r"(--[a-z][a-z-]+)", " ".join(declared)))
+            # Only a synopsis line names flags. Prose that mentions a CSS custom
+            # property (`--mk`) is not claiming the CLI has that switch, and
+            # treating it as one made this test report a flag that does not
+            # exist -- a false positive that invites weakening the docs to
+            # satisfy a loose pattern.
+            flags_in_doc = set()
+            for block in declared:
+                synopsis = [ln for ln in block.splitlines()
+                            if ln.strip().startswith("docforge ")]
+                flags_in_doc |= set(re.findall(r"(--[a-z][a-z-]+)",
+                                               " ".join(synopsis)))
             real = {o for a in sub._actions for o in a.option_strings}
             real |= {f"--{a.dest.replace('_', '-')}"
                      for a in sub._actions if not a.option_strings}
