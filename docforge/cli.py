@@ -28,6 +28,7 @@ EXIT_OK, EXIT_VALIDATION, EXIT_USAGE, EXIT_INTERNAL = 0, 1, 2, 3
 
 LAYOUT_DOC = {
     "pipeline": "横排链条，超宽自动折行成蛇形；适合主流程、阶段推进",
+    "tree": "层级树，父节点居中于子节点；适合目录、分类、组织架构",
     "matrix": "行×列表格，格子按 level 分档着色；适合优先级矩阵、热力图、覆盖表",
     "timeline": "泳道 + 时间条，按同一根轴定位；适合排期、路线图、里程碑",
     "funnel": "逐级收窄的梯形，宽度随数值变化；适合转化漏斗、筛选收敛",

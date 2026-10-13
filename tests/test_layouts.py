@@ -174,6 +174,80 @@ class DagTest(unittest.TestCase, EngineContractMixin):
         self.assertPlaced(sc, s)
 
 
+class TreeEngineTest(unittest.TestCase, EngineContractMixin):
+    """A hierarchy: parents centred over children, siblings adjacent."""
+
+    def spec(self, **opts):
+        o = {"margin": 40}
+        o.update(opts)
+        return {"id": "tr", "layout": "tree", "size": [1000, 460],
+                "options": o,
+                "nodes": [
+                    {"id": "root", "title": "根"},
+                    {"id": "a", "title": "甲", "parent": "root"},
+                    {"id": "b", "title": "乙", "parent": "root"},
+                    {"id": "a1", "title": "甲一", "parent": "a"},
+                    {"id": "a2", "title": "甲二", "parent": "a"},
+                    {"id": "b1", "title": "乙一", "parent": "b"},
+                ]}
+
+    def test_depth_becomes_rows(self):
+        """Same depth shares a row; deeper is lower."""
+        sc = render(self.spec())
+        self.assertEqual(sc.get("a").bbox.y, sc.get("b").bbox.y)
+        self.assertEqual(sc.get("a1").bbox.y, sc.get("a2").bbox.y)
+        self.assertLess(sc.get("root").bbox.y, sc.get("a").bbox.y)
+        self.assertLess(sc.get("a").bbox.y, sc.get("a1").bbox.y)
+
+    def test_a_parent_is_centred_over_its_children(self):
+        sc = render(self.spec())
+        want = (sc.get("a1").bbox.cx + sc.get("a2").bbox.cx) / 2.0
+        self.assertAlmostEqual(want, sc.get("a").bbox.cx, delta=0.6)
+
+    def test_a_single_child_sits_under_its_parent(self):
+        sc = render(self.spec())
+        self.assertAlmostEqual(sc.get("b").bbox.cx, sc.get("b1").bbox.cx, delta=0.6)
+
+    def test_siblings_stay_adjacent(self):
+        sc = render(self.spec())
+        self.assertLess(sc.get("a1").bbox.right, sc.get("a2").bbox.x)
+
+    def test_direction_right_swaps_the_axes(self):
+        """Depth runs along x, so siblings stack vertically instead."""
+        sc = render(self.spec(direction="right"))
+        self.assertLess(sc.get("root").bbox.x, sc.get("a").bbox.x)
+        self.assertAlmostEqual(sc.get("a").bbox.x, sc.get("b").bbox.x, delta=0.6)
+        self.assertNotAlmostEqual(sc.get("a").bbox.y, sc.get("b").bbox.y, delta=1.0)
+
+    def test_two_roots_are_refused_with_a_usable_message(self):
+        spec = self.spec()
+        spec["nodes"][1].pop("parent")
+        with self.assertRaises(ValueError) as caught:
+            render(spec)
+        self.assertIn("exactly one root", str(caught.exception))
+
+    def test_an_unreachable_node_is_refused(self):
+        spec = self.spec()
+        spec["nodes"].append({"id": "lost", "title": "孤儿", "parent": "ghost"})
+        with self.assertRaises(ValueError) as caught:
+            render(spec)
+        self.assertIn("not a node", str(caught.exception))
+
+    def test_a_cycle_is_refused_not_hung(self):
+        spec = self.spec()
+        spec["nodes"][1]["parent"] = "a1"      # a -> root, a1 -> a : a cycle
+        with self.assertRaises(ValueError):
+            render(spec)
+
+    def test_it_is_clean_and_deterministic(self):
+        spec = self.spec()
+        sc = render(spec)
+        self.assertPlaced(sc, spec)
+        self.assertNoOverlap(sc)
+        self.assertClean(sc)
+        self.assertDeterministic(spec)
+
+
 class MatrixEngineTest(unittest.TestCase, EngineContractMixin):
     """Cells sit on a grid, and the headers stay clear of them."""
 

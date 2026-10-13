@@ -1,0 +1,21 @@
+{
+  "id": "tree",
+  "layout": "tree",
+  "title": "层级结构",
+  "kind": "树图",
+  "size": [1000, 430],
+  "nodes": [
+    {"id": "root", "title": "Agent 内核", "kind": "indigo"},
+    {"id": "a", "title": "状态与蓝图", "parent": "root", "kind": "teal"},
+    {"id": "b", "title": "控制流", "parent": "root", "kind": "teal"},
+    {"id": "a1", "title": "State 定义", "parent": "a", "kind": "amber"},
+    {"id": "a2", "title": "节点契约", "parent": "a", "kind": "amber"},
+    {"id": "b1", "title": "意图路由", "parent": "b", "kind": "violet"},
+    {"id": "b2", "title": "兜底分支", "parent": "b", "kind": "violet"},
+    {"id": "b3", "title": "循环收敛", "parent": "b", "kind": "violet"}
+  ],
+  "notes": [
+    {"type": "text", "x": 40, "y": 404,
+     "text": "父节点居中于自己的子节点；兄弟相邻，所以没有一条边需要跨过别的子树。", "cls": "d-fig-t"}
+  ]
+}

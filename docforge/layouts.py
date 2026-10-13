@@ -948,6 +948,148 @@ def _state(spec) -> Plan:
     return plan
 
 
+@layout("tree")
+def _tree(spec) -> Plan:
+    """A hierarchy: one root, each parent centred over its own children.
+
+    Nodes name their ``parent``; the root is ``options.root`` or the one node
+    without a parent. Placement is the tidy-tree rule -- a leaf claims the next
+    free slot, a parent takes the midpoint of its children -- so siblings stay
+    adjacent and no edge has to cross a subtree to reach its target.
+
+    ``options.direction`` is ``"down"`` (default) or ``"right"``.
+    """
+    plan = Plan()
+    opts = spec.get("options", {})
+    nodes = spec["nodes"]
+    by_id = {n["id"]: n for n in nodes}
+    fs, subfs = opts.get("fs", 14.5), opts.get("subfs", 10.5)
+    down = opts.get("direction", "down") != "right"
+    gap_main = opts.get("gap_main", opts.get("gap_y", 62.0) if down else opts.get("gap_x", 76.0))
+    gap_cross = opts.get("gap_cross", opts.get("gap_x", 34.0) if down else opts.get("gap_y", 30.0))
+    margin = opts.get("margin", 40.0)
+
+    root = opts.get("root")
+    children, parent_of = {}, {}
+    for n in nodes:
+        par = n.get("parent")
+        parent_of[n["id"]] = par
+        if par:
+            children.setdefault(par, []).append(n["id"])
+    if root is None:
+        roots = [n["id"] for n in nodes if not n.get("parent")]
+        if len(roots) != 1:
+            raise ValueError(
+                f"layout 'tree' needs exactly one root; found {len(roots)} "
+                f"({', '.join(roots) or 'none'}). Set options.root or give every "
+                f"node but one a parent."
+            )
+        root = roots[0]
+    if root not in by_id:
+        raise ValueError(f"layout 'tree': options.root {root!r} is not a node")
+    unknown = sorted({p for p in parent_of.values() if p and p not in by_id})
+    if unknown:
+        raise ValueError(
+            f"layout 'tree': {', '.join(unknown)} named as a parent but not a node"
+        )
+
+    depth, seen = {}, set()
+
+    def walk(nid, level):
+        if nid in seen:
+            raise ValueError(f"layout 'tree': {nid!r} is reachable twice — the "
+                             f"parent links contain a cycle")
+        seen.add(nid)
+        depth[nid] = level
+        for kid in children.get(nid, []):
+            walk(kid, level + 1)
+
+    walk(root, 0)
+    unreachable = sorted(set(by_id) - seen)
+    if unreachable:
+        raise ValueError(
+            f"layout 'tree': {', '.join(unreachable)} not reachable from "
+            f"root {root!r}"
+        )
+
+    sizes = {n["id"]: node_size(n, fs, subfs) for n in nodes}
+    slot = [0.0]
+
+    def place(nid):
+        kids = children.get(nid, [])
+        if not kids:
+            x = slot[0]
+            slot[0] += 1.0
+            return x
+        centres = [place(k) for k in kids]
+        return (centres[0] + centres[-1]) / 2.0
+
+    slot_x = {}
+    order = []
+
+    def record(nid):
+        order.append(nid)
+        for kid in children.get(nid, []):
+            record(kid)
+
+    # record slots as the recursion returns, so each node keeps its own centre
+    def place_and_record(nid):
+        kids = children.get(nid, [])
+        if not kids:
+            x = slot[0]
+            slot[0] += 1.0
+        else:
+            centres = [place_and_record(k) for k in kids]
+            x = (centres[0] + centres[-1]) / 2.0
+        slot_x[nid] = x
+        order.append(nid)
+        return x
+
+    place_and_record(root)
+
+    widest = max(sizes[i][0] for i in order)
+    tallest = max(sizes[i][1] for i in order)
+    step_cross = (widest + gap_cross) if down else (tallest + gap_cross)
+    row_gap = gap_main
+
+    depth_h = {}
+    for nid in order:
+        d = depth[nid]
+        need = (sizes[nid][1] if down else sizes[nid][0])
+        depth_h[d] = max(depth_h.get(d, 0.0), need)
+    offsets, acc = {}, 0.0
+    for d in sorted(depth_h):
+        offsets[d] = acc
+        acc += depth_h[d] + row_gap
+
+    for nid in order:
+        w, h = sizes[nid]
+        d = depth[nid]
+        if down:
+            cx = margin + slot_x[nid] * step_cross + widest / 2.0
+            plan.placements[nid] = Rect(cx - w / 2.0, margin + offsets[d], w, h)
+        else:
+            cy = margin + slot_x[nid] * step_cross + tallest / 2.0
+            plan.placements[nid] = Rect(margin + offsets[d], cy - h / 2.0, w, h)
+
+    kind = opts.get("edge_kind", "line")
+    for nid in order:
+        for kid in children.get(nid, []):
+            a, b = plan.placements[nid], plan.placements[kid]
+            if down:
+                mid = (a.bottom + b.y) / 2.0
+                pts = [(a.cx, a.bottom), (a.cx, mid), (b.cx, mid), (b.cx, b.y - 3)]
+            else:
+                mid = (a.right + b.x) / 2.0
+                pts = [(a.right, a.cy), (mid, a.cy), (mid, b.cy), (b.x - 3, b.cy)]
+            plan.connectors.append(Connector(
+                pts, kind=kind, from_id=nid, to_id=kid, r=10,
+                label=_edge_label(spec, nid, kid),
+            ))
+    plan.auto_size(margin=margin)
+    return plan
+
+
 @layout("matrix")
 def _matrix(spec) -> Plan:
     """A grid of cells with row and column headers -- a heat map or 2x2.
