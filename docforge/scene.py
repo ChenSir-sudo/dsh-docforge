@@ -296,7 +296,7 @@ class Scene:
     def edge(self, pts, kind="line", label=None, id=None, from_id=None, to_id=None,
              dashed=False, head=True, tail=False, r=11.0, lfs=11.5,
              lx=None, ly=None, anchor="middle", halo=None, opacity=1.0,
-             label_gap=9.0, snap=False):
+             label_gap=9.0, snap=False, routed=False):
         """An orthogonal connector.
 
         ``from_id``/``to_id`` are recorded as the connector's endpoints so the
@@ -343,6 +343,7 @@ class Scene:
             kind="edge", bbox=bbox, pts=tuple(pts), text_boxes=boxes,
             id=id or self._auto_id(), endpoints=(from_id, to_id),
             meta={"kind": kind, "label": label, "length": polyline_length(pts),
+                  "routed": bool(routed),
                   "lines": [label] if label else []},
         ))
 

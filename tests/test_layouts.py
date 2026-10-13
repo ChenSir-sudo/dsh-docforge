@@ -347,6 +347,42 @@ class TimelineEngineTest(unittest.TestCase, EngineContractMixin):
                              "a bar must not leave the canvas")
         self.assertClean(sc)
 
+    def test_a_link_draws_an_arrow_between_two_bars(self):
+        spec = self.spec()
+        spec["links"] = [{"from": "b1", "to": "b2", "label": "FS"}]
+        sc = render(spec)
+        links = [i for i in sc.items if i.endpoints == ("b1", "b2")]
+        self.assertEqual(1, len(links))
+        self.assertEqual("FS", links[0].meta.get("label"))
+
+    def test_a_backward_link_routes_below_both_bars(self):
+        spec = self.spec()
+        spec["links"] = [{"from": "b2", "to": "b1"}]
+        sc = render(spec)
+        link = next(i for i in sc.items if i.endpoints == ("b2", "b1"))
+        lowest = max(sc.get("b1").bbox.bottom, sc.get("b2").bbox.bottom)
+        self.assertGreater(max(p[1] for p in link.pts), lowest,
+                           "a link pointing back in time must go around")
+        self.assertLessEqual(max(p[1] for p in link.pts), sc.height + 0.5,
+                             "and the canvas must grow to hold it")
+
+    def test_a_link_to_a_missing_bar_is_refused(self):
+        spec = self.spec()
+        spec["links"] = [{"from": "b1", "to": "nope"}]
+        with self.assertRaises(ValueError) as caught:
+            render(spec)
+        self.assertIn("not a bar", str(caught.exception))
+
+    def test_a_routed_link_is_not_judged_by_the_gap_between_its_bars(self):
+        """Two bars stacked 10px apart are fine if the arrow goes around."""
+        spec = self.spec()
+        spec["nodes"] = [
+            {"id": "b1", "row": 0, "start": 0, "end": 2, "title": "甲"},
+            {"id": "b2", "row": 0, "start": 1, "end": 2, "title": "乙"},
+        ]
+        spec["links"] = [{"from": "b1", "to": "b2"}]
+        self.assertNotIn("short-connector", {f.code for f in errors(render(spec))})
+
     def test_it_is_clean_and_deterministic(self):
         spec = self.spec()
         sc = render(spec)

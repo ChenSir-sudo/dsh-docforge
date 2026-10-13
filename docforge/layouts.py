@@ -45,6 +45,9 @@ class Connector:
     label_gap: float = 9.0
     auto_label: bool = True
     snap: bool = False
+    #: The route deliberately goes around rather than straight, so the distance
+    #: between the two boxes says nothing about how the connector reads.
+    routed: bool = False
 
 
 @dataclass
@@ -1214,7 +1217,7 @@ def _timeline(spec) -> Plan:
                 ends.append(b)
         lane_count[r] = max(1, len(ends))
 
-    lane_gap = opts.get("lane_gap", 6.0)
+    lane_gap = opts.get("lane_gap", 10.0)
     lane_h = bar_h + lane_gap
     # a row is as tall as its busiest lane stack, never less than row_h
     row_top, y = {}, top
@@ -1247,7 +1250,47 @@ def _timeline(spec) -> Plan:
         plan.placements[n["id"]] = Rect(x0, yy, w, bar_h)
         plan.shapes[n["id"]] = {"as": "bar"}
 
-    plan.size = (width, y - lane_gap + margin)
+    # Dependencies between bars. Finish-to-start is the useful default: the
+    # arrow leaves the end of one span and enters the start of the next. A link
+    # that points backwards in time is routed around underneath, because a
+    # straight run would cut back through the bars between them.
+    links = list(spec.get("links") or opts.get("links") or [])
+    for link in links:
+        src, dst = link.get("from"), link.get("to")
+        for end in (src, dst):
+            if end not in plan.placements:
+                raise ValueError(
+                    f"layout 'timeline': link names {end!r}, which is not a bar"
+                )
+        a, b = plan.placements[src], plan.placements[dst]
+        if b.x >= a.right:
+            mid = (a.right + b.x) / 2.0
+            pts = [(a.right, a.cy), (mid, a.cy), (mid, b.cy), (b.x - 3, b.cy)]
+            # beside the vertical run: the polyline's own midpoint sits on a
+            # corner, and a label there lands against one of the two bars
+            if link.get("lx") is None:
+                link["lx"] = mid + 5.0
+                link.setdefault("ly", (a.cy + b.cy) / 2.0)
+                link.setdefault("anchor", "start")
+        else:
+            ch = max(a.bottom, b.bottom) + opts.get("link_gap", 20.0)
+            pts = [(a.cx, a.bottom), (a.cx, ch), (b.cx, ch), (b.cx, b.bottom + 3)]
+            if link.get("lx") is None:
+                link["lx"] = (a.cx + b.cx) / 2.0
+                link.setdefault("ly", ch - 9.0)
+                link.setdefault("anchor", "middle")
+        plan.connectors.append(Connector(
+            pts, kind=link.get("kind", "slate"), from_id=src, to_id=dst,
+            label=link.get("label"), lx=link.get("lx"), ly=link.get("ly"),
+            anchor=link.get("anchor", "middle"), dashed=link.get("dashed", False),
+            r=9, routed=True,
+        ))
+
+    # a backward link's channel sits below every bar, so the canvas owes it room
+    bottom = y - lane_gap
+    for c in plan.connectors:
+        bottom = max(bottom, max(p[1] for p in c.pts))
+    plan.size = (width, bottom + margin)
     plan.allow_isolated = True      # bars sit on lanes, they do not connect
     return plan
 
@@ -1507,7 +1550,8 @@ def render(spec, scene: Scene = None, path: str = None, _depth: int = 0) -> Scen
             lx, ly = mid[0], mid[1] - c.label_gap
         sc.edge(c.pts, kind=c.kind, label=c.label, from_id=c.from_id,
                 to_id=c.to_id, dashed=c.dashed, head=c.head, tail=c.tail,
-                r=c.r, lfs=c.lfs, lx=lx, ly=ly, anchor=anchor, snap=c.snap)
+                r=c.r, lfs=c.lfs, lx=lx, ly=ly, anchor=anchor, snap=c.snap,
+                routed=c.routed)
 
     if getattr(plan, "allow_isolated", False):
         sc.allow_isolated = set(by_id)

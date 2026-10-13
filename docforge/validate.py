@@ -592,6 +592,10 @@ def _check_short(scene, items, boxes, out, minimum=SHORT_CONNECTOR):
     for it in items:
         if it.kind not in ("edge", "arc") or it.meta.get("length") is None:
             continue
+        if it.meta.get("routed"):
+            # A dependency arrow goes around its bars on purpose; the gap
+            # between them is not what makes it readable.
+            continue
         ends = [e for e in it.endpoints if e]
         if len(ends) != 2:
             continue

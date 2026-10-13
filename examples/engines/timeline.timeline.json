@@ -1,23 +1,91 @@
 {
   "id": "timeline",
   "layout": "timeline",
-  "title": "交付排期",
+  "title": "交付排期与依赖",
   "kind": "时间轴",
-  "size": [1000, 320],
+  "size": [
+    1040,
+    400
+  ],
   "options": {
-    "axis": ["Q1", "Q2", "Q3", "Q4"],
-    "row_labels": ["设计", "开发", "上线"],
+    "axis": [
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4"
+    ],
+    "row_labels": [
+      "设计",
+      "开发",
+      "上线"
+    ],
     "margin": 44,
-    "row_h": 52,
+    "row_h": 56,
     "bar_h": 28
   },
   "nodes": [
-    {"id": "t1", "row": 0, "start": 0, "end": 1.2, "title": "方案与评审", "kind": "indigo"},
-    {"id": "t2", "row": 1, "start": 1.0, "end": 2.6, "title": "开发与联调", "kind": "teal"},
-    {"id": "t3", "row": 2, "start": 2.6, "end": 3.0, "title": "灰度", "kind": "amber"}
+    {
+      "id": "t1",
+      "row": 0,
+      "start": 0,
+      "end": 1.2,
+      "title": "方案与评审",
+      "kind": "indigo"
+    },
+    {
+      "id": "t2",
+      "row": 1,
+      "start": 1.2,
+      "end": 2.4,
+      "title": "开发与联调",
+      "kind": "teal"
+    },
+    {
+      "id": "t3",
+      "row": 1,
+      "start": 1.6,
+      "end": 2.8,
+      "title": "测试",
+      "kind": "violet"
+    },
+    {
+      "id": "t4",
+      "row": 2,
+      "start": 2.8,
+      "end": 3.0,
+      "title": "灰度",
+      "kind": "amber"
+    }
+  ],
+  "links": [
+    {
+      "from": "t1",
+      "to": "t2",
+      "label": "FS"
+    },
+    {
+      "from": "t2",
+      "to": "t3",
+      "dashed": true
+    },
+    {
+      "from": "t3",
+      "to": "t4"
+    },
+    {
+      "from": "t4",
+      "to": "t1",
+      "label": "回退",
+      "dashed": true
+    }
   ],
   "notes": [
-    {"type": "text", "x": 44, "y": 292,
-     "text": "start / end 以刻度为单位；同一行可以放多根条，重叠处一眼看得出。", "cls": "d-fig-t"}
+    {
+      "type": "text",
+      "x": 44,
+      "y": 374,
+      "text": "start / end 以刻度为单位；同一行的重叠区间自动分道；links 画依赖箭头，向后指的走下方通道。",
+      "cls": "d-fig-t"
+    }
   ]
 }
