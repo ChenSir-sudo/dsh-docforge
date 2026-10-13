@@ -1,0 +1,22 @@
+{
+  "id": "funnel",
+  "layout": "funnel",
+  "title": "转化漏斗",
+  "kind": "漏斗图",
+  "size": [820, 400],
+  "options": {
+    "margin": 44,
+    "stage_h": 78,
+    "stage_gap": 14,
+    "drop_labels": [null, "−42%", "−25%"]
+  },
+  "nodes": [
+    {"id": "s1", "title": "访问", "value": "12000", "kind": "indigo"},
+    {"id": "s2", "title": "注册", "value": "7000", "kind": "violet"},
+    {"id": "s3", "title": "付费", "value": "2600", "kind": "teal"}
+  ],
+  "notes": [
+    {"type": "text", "x": 44, "y": 372,
+     "text": "宽度由 value 决定，所以形状本身就是结论；drop_labels 标出每级损耗。", "cls": "d-fig-t"}
+  ]
+}

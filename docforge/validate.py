@@ -55,7 +55,7 @@ WARNING_CODES = (
 ALL_CODES = ERROR_CODES + WARNING_CODES
 _ORDER = {ERROR: 0, WARNING: 1, INFO: 2}
 
-BOX_KINDS = ("node", "card", "tag")
+BOX_KINDS = ("node", "card", "tag", "cell", "bar", "funnel")
 LABEL_KINDS = ("edge", "text")
 
 
@@ -225,6 +225,14 @@ def _check_edges(scene, items, boxes, clearance, out):
             out.append(Finding("degenerate-edge", ERROR,
                                "connector is shorter than 2px",
                                figure=scene.uid, item=it.id))
+        if it.meta.get("decor"):
+            # A decorative rule is background furniture: a gridline behind a
+            # bar, a lifeline behind a message and its label. It is exempt from
+            # every collision rule for the same reason -- labels carry a halo
+            # that knocks the line out, so text on top of one stays readable by
+            # construction. Measured as a connector it produced nothing but
+            # false positives on sequence diagrams.
+            continue
         # An arc must clear *every* node, including the two it joins: a ring arc
         # whose sweep is too long cuts straight through the node it is heading
         # for, and excluding its own endpoints is what used to hide that.

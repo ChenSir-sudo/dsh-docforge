@@ -466,3 +466,71 @@ class RawTest(unittest.TestCase):
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
+
+
+class DataPrimitiveTest(unittest.TestCase):
+    """cell / bar / funnel draw *and* record. The record is what gets checked."""
+
+    def setUp(self):
+        self.sc = Scene("dp", 640, 420)
+
+    # ---------------------------------------------------------------- cell
+    def test_a_cell_records_its_box_its_texts_and_its_level(self):
+        it = self.sc.cell(40, 40, 160, 90, value="12", label="立刻做",
+                          level=3, kind="red")
+        self.assertEqual("cell", it.kind)
+        self.assertEqual((40, 40, 160, 90), (it.bbox.x, it.bbox.y, it.bbox.w, it.bbox.h))
+        self.assertEqual(2, len(it.text_boxes))
+        self.assertEqual(3, it.meta["level"])
+        self.assertEqual(["12", "立刻做"], it.meta["lines"])
+
+    def test_a_cell_level_is_clamped_into_range(self):
+        self.assertEqual(4, self.sc.cell(0, 0, 50, 50, value="x", level=9).meta["level"])
+        self.assertEqual(0, self.sc.cell(0, 0, 50, 50, value="x", level=-2).meta["level"])
+
+    def test_a_cell_with_only_a_label_records_one_text(self):
+        it = self.sc.cell(0, 0, 120, 60, label="空")
+        self.assertEqual(1, len(it.text_boxes))
+        self.assertEqual(["空"], it.meta["lines"])
+
+    def test_a_cell_with_nothing_in_it_records_no_text(self):
+        self.assertEqual([], self.sc.cell(0, 0, 120, 60).text_boxes)
+
+    # ----------------------------------------------------------------- bar
+    def test_a_bar_label_that_fits_stays_inside_its_box(self):
+        it = self.sc.bar(40, 40, 240, 28, label="开发")
+        self.assertTrue(it.bbox.contains_rect(it.text_boxes[0]))
+
+    def test_a_bar_too_narrow_for_its_label_widens_its_extent(self):
+        """Otherwise the validator rightly calls an intended render an overflow."""
+        it = self.sc.bar(40, 40, 20, 28, label="灰度上线")
+        self.assertGreater(it.bbox.w, 20.0, "the extent must cover the outside label")
+        self.assertTrue(it.bbox.contains_rect(it.text_boxes[0]))
+
+    def test_a_bar_without_a_label_records_no_text(self):
+        it = self.sc.bar(40, 40, 100, 28)
+        self.assertEqual([], it.text_boxes)
+
+    # -------------------------------------------------------------- funnel
+    def test_a_funnel_records_the_wider_of_its_two_ends(self):
+        it = self.sc.funnel(300, 40, 400, 120, 70, label="访问")
+        self.assertEqual(400, it.bbox.w, "the bbox must cover the wider end")
+        self.assertEqual(300, it.bbox.cx)
+
+    def test_funnel_text_is_measured_against_the_narrow_end(self):
+        narrow = self.sc.funnel(300, 40, 400, 60, 70, label="一个相当长的阶段名称")
+        self.assertTrue(narrow.text_boxes)
+        for tb in narrow.text_boxes:
+            self.assertLessEqual(tb.w, 60.0 + 0.5,
+                                 "text must fit the width the stage actually has")
+
+    def test_every_primitive_registers_exactly_one_item(self):
+        before = len(self.sc.items)
+        self.sc.cell(0, 0, 80, 60, value="1")
+        self.sc.bar(0, 100, 80, 24, label="x")
+        self.sc.funnel(320, 0, 200, 100, 60, label="y")
+        self.assertEqual(before + 3, len(self.sc.items))
+
+
+if __name__ == "__main__":
+    unittest.main()

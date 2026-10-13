@@ -36,6 +36,11 @@ def errors(scene, **kw):
     return [f for f in V.check_scene(scene, **kw) if f.severity == V.ERROR]
 
 
+#: Everything a node can be drawn as. An engine places a rect; the node's
+#: ``as`` decides which primitive fills it, and all of them are "placed".
+SHAPE_KINDS = ("node", "card", "chip", "cell", "bar", "funnel")
+
+
 class EngineContractMixin:
     """Every engine must satisfy these, whatever the layout."""
 
@@ -43,11 +48,11 @@ class EngineContractMixin:
         want = {n["id"] for n in spec["nodes"]} - set(
             spec.get("options", {}).get("unplaced", [])
         )
-        got = {i.id for i in scene.items if i.kind in ("node", "card")}
+        got = {i.id for i in scene.items if i.kind in SHAPE_KINDS}
         self.assertEqual(want, got, "every declared node must be drawn exactly once")
 
     def assertNoOverlap(self, scene):
-        boxes = [i for i in scene.items if i.kind in ("node", "card", "tag")]
+        boxes = [i for i in scene.items if i.kind in SHAPE_KINDS]
         for i in range(len(boxes)):
             for j in range(i + 1, len(boxes)):
                 self.assertFalse(
@@ -167,6 +172,165 @@ class DagTest(unittest.TestCase, EngineContractMixin):
         }
         sc = render(s)          # must terminate
         self.assertPlaced(sc, s)
+
+
+class MatrixEngineTest(unittest.TestCase, EngineContractMixin):
+    """Cells sit on a grid, and the headers stay clear of them."""
+
+    def spec(self, **opts):
+        o = {"row_labels": ["影响大", "影响小"], "col_labels": ["容易做", "难做"],
+             "corner": "优先级", "cell_h": 100, "margin": 40, "gap": 12}
+        o.update(opts)
+        nodes = [{"id": f"c{r}{c}", "row": r, "col": c, "title": f"格{r}{c}",
+                  "value": str(r * 2 + c), "level": r + c, "kind": "indigo"}
+                 for r in range(2) for c in range(2)]
+        return {"id": "mx", "layout": "matrix", "size": [820, 460],
+                "options": o, "nodes": nodes}
+
+    def test_cells_share_rows_and_columns(self):
+        sc = render(self.spec())
+        xs = {sc.get(f"c{r}{c}").bbox.x for r in range(2) for c in range(2)}
+        ys = {sc.get(f"c{r}{c}").bbox.y for r in range(2) for c in range(2)}
+        self.assertEqual(2, len(xs), "two columns means two distinct x")
+        self.assertEqual(2, len(ys), "two rows means two distinct y")
+
+    def test_cells_are_uniform(self):
+        sc = render(self.spec())
+        sizes = {(round(sc.get(f"c{r}{c}").bbox.w), round(sc.get(f"c{r}{c}").bbox.h))
+                 for r in range(2) for c in range(2)}
+        self.assertEqual(1, len(sizes), f"cells differ in size: {sizes}")
+
+    def test_the_engine_implies_the_cell_shape(self):
+        sc = render(self.spec())
+        self.assertTrue(all(sc.get(f"c{r}{c}").kind == "cell"
+                            for r in range(2) for c in range(2)),
+                        "a matrix spec should not have to say as:cell")
+
+    def test_a_node_may_override_its_own_shape(self):
+        """The engine implies `cell`; an explicit `as` on the node still wins."""
+        default = render(self.spec())
+        spec = self.spec()
+        spec["nodes"][0]["as"] = "chip"
+        overridden = render(spec)
+        self.assertEqual("cell", default.get("c00").kind)
+        self.assertNotEqual("cell", overridden.get("c00").kind,
+                            "the node's own `as` must beat the engine's implication")
+        self.assertNotEqual(default.svg(), overridden.svg())
+
+    def test_it_is_clean_and_deterministic(self):
+        spec = self.spec()
+        sc = render(spec)
+        self.assertPlaced(sc, spec)
+        self.assertNoOverlap(sc)
+        self.assertClean(sc)
+        self.assertDeterministic(spec)
+
+
+class TimelineEngineTest(unittest.TestCase, EngineContractMixin):
+    """Bars are positioned by their span and never leave the axis."""
+
+    def spec(self, **opts):
+        o = {"axis": ["Q1", "Q2", "Q3", "Q4"], "row_labels": ["设计", "开发"],
+             "margin": 40, "row_h": 50, "bar_h": 26}
+        o.update(opts)
+        return {"id": "tl", "layout": "timeline", "size": [900, 320],
+                "options": o,
+                "nodes": [{"id": "b1", "row": 0, "start": 0, "end": 1.5, "title": "设计"},
+                          {"id": "b2", "row": 1, "start": 1.0, "end": 2.5, "title": "开发"},
+                          {"id": "b3", "row": 1, "start": 2.6, "end": 3.0, "title": "上线"}]}
+
+    def test_bars_are_ordered_by_their_start(self):
+        sc = render(self.spec())
+        self.assertLess(sc.get("b2").bbox.x, sc.get("b3").bbox.x)
+
+    def test_bars_in_one_row_share_a_baseline(self):
+        sc = render(self.spec())
+        self.assertAlmostEqual(sc.get("b2").bbox.y, sc.get("b3").bbox.y, delta=0.5)
+
+    def test_overlapping_spans_in_one_row_are_stacked_not_collided(self):
+        """Two tasks in one row are a real thing to draw; they get sub-lanes."""
+        spec = self.spec()
+        spec["nodes"] = [
+            {"id": "a", "row": 0, "start": 0, "end": 2, "title": "长任务"},
+            {"id": "b", "row": 0, "start": 1, "end": 2, "title": "并行"},
+            {"id": "c", "row": 0, "start": 2, "end": 3, "title": "接续"},
+        ]
+        sc = render(spec)
+        self.assertNotEqual(sc.get("a").bbox.y, sc.get("b").bbox.y,
+                            "overlapping spans must not sit on the same sub-lane")
+        self.assertAlmostEqual(
+            sc.get("a").bbox.y, sc.get("c").bbox.y, delta=0.5,
+            msg="a span starting after the first ends reuses its lane")
+        self.assertClean(sc)
+        self.assertNoOverlap(sc)
+
+    def test_a_bar_past_the_last_tick_is_clamped_into_the_canvas(self):
+        spec = self.spec()
+        spec["nodes"].append({"id": "over", "row": 0, "start": 3.0, "end": 99.0,
+                              "title": "越界"})
+        sc = render(spec)
+        self.assertLessEqual(sc.get("over").bbox.right, sc.width + 0.5,
+                             "a bar must not leave the canvas")
+        self.assertClean(sc)
+
+    def test_it_is_clean_and_deterministic(self):
+        spec = self.spec()
+        sc = render(spec)
+        self.assertPlaced(sc, spec)
+        self.assertNoOverlap(sc)
+        self.assertClean(sc)
+        self.assertDeterministic(spec)
+
+
+class FunnelEngineTest(unittest.TestCase, EngineContractMixin):
+    """Stages narrow, and the narrowing follows the numbers when given."""
+
+    def spec(self, values=(1200, 700, 260), **opts):
+        o = {"margin": 40, "stage_h": 70, "stage_gap": 12}
+        o.update(opts)
+        return {"id": "fn", "layout": "funnel", "size": [760, 380],
+                "options": o,
+                "nodes": [{"id": f"s{i}", "title": f"阶段{i}", "value": str(v)}
+                          for i, v in enumerate(values)]}
+
+    def widths(self, sc, n=3):
+        return [sc.get(f"s{i}").bbox.w for i in range(n)]
+
+    def test_widths_never_grow_down_the_funnel(self):
+        w = self.widths(render(self.spec()))
+        for a, b in zip(w, w[1:]):
+            self.assertLessEqual(b, a + 0.5, f"a stage got wider: {w}")
+
+    def test_width_is_proportional_to_value(self):
+        sc = render(self.spec(values=(1200, 600, 300)))
+        w = self.widths(sc)
+        self.assertAlmostEqual(w[0] / w[1], 2.0, delta=0.05)
+        self.assertAlmostEqual(w[1] / w[2], 2.0, delta=0.05)
+
+    def test_stages_stack_without_touching(self):
+        sc = render(self.spec())
+        self.assertLess(sc.get("s0").bbox.bottom, sc.get("s1").bbox.y)
+        self.assertLess(sc.get("s1").bbox.bottom, sc.get("s2").bbox.y)
+
+    def test_stages_share_a_centre_line(self):
+        sc = render(self.spec())
+        centres = {round(sc.get(f"s{i}").bbox.cx, 1) for i in range(3)}
+        self.assertEqual(1, len(centres), f"stages are not centred: {centres}")
+
+    def test_without_values_it_falls_back_to_a_linear_taper(self):
+        spec = self.spec()
+        for n in spec["nodes"]:
+            n.pop("value")
+        w = self.widths(render(spec))
+        self.assertLess(w[2], w[0])
+
+    def test_it_is_clean_and_deterministic(self):
+        spec = self.spec()
+        sc = render(spec)
+        self.assertPlaced(sc, spec)
+        self.assertNoOverlap(sc)
+        self.assertClean(sc)
+        self.assertDeterministic(spec)
 
 
 class FanReachTest(unittest.TestCase, EngineContractMixin):

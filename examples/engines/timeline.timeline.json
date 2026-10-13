@@ -1,0 +1,23 @@
+{
+  "id": "timeline",
+  "layout": "timeline",
+  "title": "交付排期",
+  "kind": "时间轴",
+  "size": [1000, 320],
+  "options": {
+    "axis": ["Q1", "Q2", "Q3", "Q4"],
+    "row_labels": ["设计", "开发", "上线"],
+    "margin": 44,
+    "row_h": 52,
+    "bar_h": 28
+  },
+  "nodes": [
+    {"id": "t1", "row": 0, "start": 0, "end": 1.2, "title": "方案与评审", "kind": "indigo"},
+    {"id": "t2", "row": 1, "start": 1.0, "end": 2.6, "title": "开发与联调", "kind": "teal"},
+    {"id": "t3", "row": 2, "start": 2.6, "end": 3.0, "title": "灰度", "kind": "amber"}
+  ],
+  "notes": [
+    {"type": "text", "x": 44, "y": 292,
+     "text": "start / end 以刻度为单位；同一行可以放多根条，重叠处一眼看得出。", "cls": "d-fig-t"}
+  ]
+}

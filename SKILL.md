@@ -177,6 +177,9 @@ numbering: auto       # auto：标题自动编号（一、/ 1. / [1] / 1.1 / [1]
 |---|---|---|
 | `pipeline` | 横排链条，超宽自动折行成蛇形 | `y` `gap` `margin` `rows` |
 | `dag` | 分层有向图，菱形、合流都对 | `center_sinks` `gap_x` `gap_y` `channel` |
+| `matrix` | 行×列表格，格子按 `level` 分档着色 | `row_labels` `col_labels` `cell_w` `cell_h` `corner`（必填 `nodes[].row` / `nodes[].col`） |
+| `timeline` | 泳道 + 时间条，共用一根轴 | `axis` `row_labels` `row_h` `bar_h`（必填 `nodes[].row` / `.start` / `.end`） |
+| `funnel` | 逐级收窄的梯形 | `stage_h` `min_ratio` `drop_labels`（节点按顺序堆叠） |
 | `fan` | 左侧一条链 → 一个枢纽 → 右侧 N 个分支 | `prefix` `source` `targets` `labels` `reach` |
 | `layers` | 分层容器带，每带一行/一列 | `groups`（必填）`label_h` `band_gap` |
 | `hub` | 中心节点 + 左右两列卫星 + 一个下方节点 | `center` `left` `right` `below` |

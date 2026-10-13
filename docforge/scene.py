@@ -351,6 +351,144 @@ class Scene:
                   "length": polyline_length(pts)},
         ))
 
+    # ------------------------------------------------------------------
+    # Data-shaped primitives: a value in a cell, a span on an axis, a stage
+    # that narrows. Each registers like any other box, so text overflow,
+    # overlap and edge-through all apply to them without extra rules.
+    # ------------------------------------------------------------------
+    def cell(self, x, y, w, h, value=None, label=None, kind="default",
+             level=0, id=None, vfs=17.0, lfs=10.5, pad=10.0, rx=8.0):
+        """One matrix cell: a value, with an optional caption beneath it.
+
+        ``level`` (0-4) mixes the cell's kind accent into its fill. That is what
+        lets a grid read as a heat map instead of a table -- the intensity is
+        carried by the colour, so the numbers stay legible on top of it.
+        """
+        level = max(0, min(4, int(level)))
+        value = "" if value is None else str(value)
+        label = str(label) if label else ""
+        self.raw(f'<g class="nd k-{kind}">')
+        self.raw(
+            f'<rect class="d-cell lv-{level}" x="{x:g}" y="{y:g}" width="{w:g}" '
+            f'height="{h:g}" rx="{rx:g}"/>'
+        )
+        boxes = []
+        inner = Rect(x + pad, y + pad, w - 2 * pad, h - 2 * pad)
+        if value and label:
+            vy = y + h * 0.40
+            ly = y + h * 0.68
+            self.raw(
+                f'<text class="d-cell-v" x="{x + w / 2:g}" y="{vy:.1f}" text-anchor="middle" '
+                f'dominant-baseline="central" style="font-size:{vfs:g}px">{esc(value)}</text>'
+            )
+            self.raw(
+                f'<text class="d-cell-l" x="{x + w / 2:g}" y="{ly:.1f}" text-anchor="middle" '
+                f'dominant-baseline="central" style="font-size:{lfs:g}px">{esc(label)}</text>'
+            )
+            boxes.append(Rect(x + (w - T.tw(value, vfs)) / 2.0, vy - vfs / 2.0,
+                              T.tw(value, vfs), vfs))
+            boxes.append(Rect(x + (w - T.tw(label, lfs)) / 2.0, ly - lfs / 2.0,
+                              T.tw(label, lfs), lfs))
+        elif value or label:
+            text = value or label
+            fs = vfs if value else lfs
+            cy = y + h / 2.0
+            self.raw(
+                f'<text class="{"d-cell-v" if value else "d-cell-l"}" '
+                f'x="{x + w / 2:g}" y="{cy:.1f}" text-anchor="middle" '
+                f'dominant-baseline="central" style="font-size:{fs:g}px">{esc(text)}</text>'
+            )
+            boxes.append(Rect(x + (w - T.tw(text, fs)) / 2.0, cy - fs / 2.0,
+                              T.tw(text, fs), fs))
+        self.raw("</g>")
+        return self._register(Item(
+            kind="cell", bbox=Rect(x, y, w, h), inner=inner,
+            text_boxes=boxes, id=id or self._auto_id(),
+            meta={"kind": kind, "label": label or value, "level": level,
+                  "lines": [t for t in (value, label) if t]},
+        ))
+
+    def bar(self, x, y, w, h, label=None, kind="teal", dashed=False, id=None,
+            fs=11.0, pad=9.0, rx=7.0):
+        """A span on an axis: one bar of a timeline or a Gantt row."""
+        label = str(label) if label else ""
+        dash = ' stroke-dasharray="6 5"' if dashed else ""
+        self.raw(f'<g class="nd k-{kind}">')
+        self.raw(
+            f'<rect class="d-bar" x="{x:g}" y="{y:g}" width="{w:g}" height="{h:g}" '
+            f'rx="{rx:g}"{dash}/>'
+        )
+        boxes = []
+        extent = Rect(x, y, w, h)
+        if label:
+            tw = T.tw(label, fs)
+            if tw <= w - 2 * pad:
+                cx, anchor = x + w / 2.0, "middle"
+                tb = Rect(cx - tw / 2.0, y + h / 2.0 - fs / 2.0, tw, fs)
+            else:
+                # Too narrow to hold its own label: the text sits just after the
+                # bar, and the bar's *declared extent* grows to cover it. The
+                # alternative is a label the validator would rightly call an
+                # overflow, for a bar that renders exactly as intended.
+                cx, anchor = x + w + pad, "start"
+                tb = Rect(cx, y + h / 2.0 - fs / 2.0, tw, fs)
+                extent = Rect(x, y, tb.right - x, h)
+            boxes.append(tb)
+            self.raw(
+                f'<text class="d-bar-t" x="{cx:g}" y="{y + h / 2.0:.1f}" '
+                f'text-anchor="{anchor}" dominant-baseline="central" '
+                f'style="font-size:{fs:g}px">{esc(label)}</text>'
+            )
+        self.raw("</g>")
+        return self._register(Item(
+            kind="bar", bbox=extent,
+            inner=Rect(extent.x + 2, extent.y + 2,
+                       max(0.0, extent.w - 4), max(0.0, extent.h - 4)),
+            text_boxes=boxes, id=id or self._auto_id(),
+            meta={"kind": kind, "label": label, "lines": [label] if label else []},
+        ))
+
+    def funnel(self, cx, y, w_top, w_bottom, h, label=None, value=None,
+               kind="indigo", id=None, fs=12.5, vfs=12.5, pad=12.0):
+        """One stage of a funnel: a trapezoid from *w_top* down to *w_bottom*.
+
+        The label is measured against the trapezoid's *narrower* end, because
+        that is the width the text actually has to live in near the bottom.
+        """
+        label = str(label) if label else ""
+        value = str(value) if value else ""
+        self.raw(f'<g class="nd k-{kind}">')
+        self.raw(
+            f'<path class="d-funnel" d="M {cx - w_top / 2:g} {y:g} '
+            f'L {cx + w_top / 2:g} {y:g} L {cx + w_bottom / 2:g} {y + h:g} '
+            f'L {cx - w_bottom / 2:g} {y + h:g} Z"/>'
+        )
+        boxes = []
+        safe = min(w_top, w_bottom) - 2 * pad
+        texts = [t for t in (value, label) if t]
+        if texts and safe > 10:
+            cy = y + h * (0.40 if len(texts) > 1 else 0.5)
+            for i, text in enumerate(texts):
+                fs_i = vfs if (i == 0 and value) else fs
+                ty = cy if i == 0 else cy + h * 0.26
+                shown = T.truncate(text, fs_i, safe)
+                self.raw(
+                    f'<text class="{"d-funnel-v" if (i == 0 and value) else "d-funnel-l"}" '
+                    f'x="{cx:g}" y="{ty:.1f}" text-anchor="middle" '
+                    f'dominant-baseline="central" style="font-size:{fs_i:g}px">{esc(shown)}</text>'
+                )
+                boxes.append(Rect(cx - T.tw(shown, fs_i) / 2.0, ty - fs_i / 2.0,
+                                  T.tw(shown, fs_i), fs_i))
+        self.raw("</g>")
+        return self._register(Item(
+            kind="funnel", bbox=Rect(cx - max(w_top, w_bottom) / 2.0, y,
+                                     max(w_top, w_bottom), h),
+            inner=Rect(cx - safe / 2.0, y + 4, max(0.0, safe), max(0.0, h - 8)),
+            text_boxes=boxes, id=id or self._auto_id(),
+            meta={"kind": kind, "label": label or value,
+                  "lines": [t for t in (value, label) if t]},
+        ))
+
     def tag(self, x, y, label, kind="line", anchor="middle", fs=11.0, pad=7.0,
             id=None):
         label = str(label)

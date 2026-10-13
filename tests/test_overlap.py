@@ -12,6 +12,7 @@ import unittest
 
 from docforge import specs
 from docforge import validate as V
+from docforge.scene import Scene
 
 from .test_layouts import EngineContractMixin, node, render
 
@@ -155,6 +156,48 @@ class LabelOverBandTest(unittest.TestCase, EngineContractMixin):
 
     def test_a_note_in_its_own_strip_is_clean(self):
         self.assertNotIn("label-collision", codes(self.spec(8)))
+
+
+class DecorIsBackgroundTest(unittest.TestCase, EngineContractMixin):
+    """A decorative rule passes behind shapes and text -- nothing else may.
+
+    Gridlines under bars and lifelines under messages are the two cases that
+    define this: measuring them as connectors produced false positives on every
+    sequence diagram, and letting them through while still checking other
+    connectors is the only split that matched what the renderer actually does.
+    """
+
+    def test_a_gridline_behind_a_bar_is_not_a_through_collision(self):
+        sc = Scene("decor", 600, 300)
+        sc.line([(60, 60), (60, 240)], cls="d-tl-tick")
+        sc.bar(40, 100, 300, 28, label="跨越网格线")
+        codes = {f.code for f in V.check_scene(sc)}
+        self.assertNotIn("edge-through", codes)
+
+    def test_a_connector_through_a_bar_is_still_reported(self):
+        sc = Scene("real", 600, 300)
+        sc.bar(200, 100, 200, 28, label="被穿过")
+        sc.node(60, 100, 100, 40, "来源")
+        sc.edge([(160, 120), (400, 120)], from_id="a", to_id="b")
+        self.assertIn("edge-through", {f.code for f in V.check_scene(sc)})
+
+    def test_a_cell_participates_in_overlap_checking(self):
+        sc = Scene("cells", 600, 300)
+        sc.cell(40, 40, 160, 90, value="1")
+        sc.cell(120, 80, 160, 90, value="2")
+        self.assertIn("box-overlap", {f.code for f in V.check_scene(sc)})
+
+    def test_cell_text_that_does_not_fit_is_reported(self):
+        sc = Scene("tight", 600, 300)
+        sc.cell(40, 40, 60, 40, value="一个很长的值", label="也很长的说明")
+        self.assertIn("text-overflow", {f.code for f in V.check_scene(sc)})
+
+    def test_a_connector_through_a_cell_is_reported(self):
+        sc = Scene("through", 600, 300)
+        sc.cell(200, 100, 180, 90, value="挡路的格子")
+        sc.node(40, 120, 100, 40, "来源")
+        sc.edge([(140, 145), (400, 145)], from_id="a", to_id="b")
+        self.assertIn("edge-through", {f.code for f in V.check_scene(sc)})
 
 
 class FigureStylesTest(unittest.TestCase, EngineContractMixin):

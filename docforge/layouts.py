@@ -73,6 +73,10 @@ class Plan:
     placements: dict = field(default_factory=dict)   # node id -> Rect
     allow_detached: bool = False                     # see validate._check_detached
     allow_crossing: bool = False                     # see validate._check_crossings
+    allow_isolated: bool = False                     # see validate._check_isolated
+    #: Drawing hints a rect cannot express -- a funnel's two widths, say.
+    #: Keyed by node id; ``render`` reads them when it picks the shape.
+    shapes: dict = field(default_factory=dict)
     connectors: list = field(default_factory=list)
     bands: list = field(default_factory=list)
     annotations: list = field(default_factory=list)
@@ -912,6 +916,223 @@ def _state(spec) -> Plan:
     return plan
 
 
+@layout("matrix")
+def _matrix(spec) -> Plan:
+    """A grid of cells with row and column headers -- a heat map or 2x2.
+
+    Cells come from ``nodes``, each naming its ``row`` and ``col``; the headers
+    come from ``options.row_labels`` / ``options.col_labels``. The engine
+    implies ``as: cell`` so a matrix spec does not have to repeat it, but a node
+    may still override its own shape.
+    """
+    plan = Plan()
+    opts = spec.get("options", {})
+    width = opts.get("width", (spec.get("size") or [1200])[0])
+    margin = opts.get("margin", 40.0)
+    row_labels = [str(r) for r in opts.get("row_labels", [])]
+    col_labels = [str(c) for c in opts.get("col_labels", [])]
+    lfs = opts.get("lfs", 12.0)
+    gap = opts.get("gap", 12.0)
+
+    n_cols = max(len(col_labels),
+                 max((int(n.get("col", 0)) + 1 for n in spec["nodes"]), default=1))
+    n_rows = max(len(row_labels),
+                 max((int(n.get("row", 0)) + 1 for n in spec["nodes"]), default=1))
+
+    # a gutter wide enough for the longest row header, a strip for the columns
+    gutter = (max(T.tw(t, lfs) for t in row_labels) + opts.get("gutter_pad", 18.0)
+              if row_labels else 0.0)
+    head_h = opts.get("head_h", 34.0) if col_labels else 0.0
+    usable = width - 2 * margin - gutter
+    cw = opts.get("cell_w") or (usable - gap * (n_cols - 1)) / n_cols
+    ch = opts.get("cell_h", 104.0)
+    top = opts.get("y", margin) + head_h
+
+    for n in spec["nodes"]:
+        r, c = int(n.get("row", 0)), int(n.get("col", 0))
+        rect = Rect(margin + gutter + c * (cw + gap), top + r * (ch + gap), cw, ch)
+        plan.placements[n["id"]] = rect
+        plan.shapes[n["id"]] = {"as": "cell"}
+
+    cx0 = margin + gutter
+    for c, text in enumerate(col_labels):
+        plan.annotations.append(Annotation("text", dict(
+            x=cx0 + c * (cw + gap) + cw / 2.0,
+            y=(top - head_h / 2.0) if head_h else top - 14.0,
+            label=text, anchor="middle", fs=lfs, cls="d-mx-head")))
+    for r, text in enumerate(row_labels):
+        plan.annotations.append(Annotation("text", dict(
+            x=margin + gutter - opts.get("gutter_pad", 18.0),
+            y=top + r * (ch + gap) + ch / 2.0,
+            label=text, anchor="end", fs=lfs, cls="d-mx-head")))
+    if opts.get("corner"):
+        plan.annotations.append(Annotation("text", dict(
+            x=margin, y=(top - head_h / 2.0) if head_h else top - 14.0,
+            label=str(opts["corner"]), anchor="start", fs=opts.get("cfs", 11.0),
+            cls="d-mx-corner")))
+
+    bottom = top + n_rows * ch + (n_rows - 1) * gap
+    plan.size = (width, bottom + margin)
+    plan.allow_isolated = True      # cells are a grid, not a graph
+    return plan
+
+
+@layout("timeline")
+def _timeline(spec) -> Plan:
+    """Lanes with bars positioned along a shared axis.
+
+    ``options.axis`` gives the tick labels; a node says which ``row`` it sits in
+    and spans ``start``..``end`` in tick units. Bars are implied, so a node only
+    needs its label and its span.
+    """
+    plan = Plan()
+    opts = spec.get("options", {})
+    width = opts.get("width", (spec.get("size") or [1200])[0])
+    margin = opts.get("margin", 40.0)
+    axis = [str(a) for a in opts.get("axis", [])]
+    rows = [str(r) for r in opts.get("row_labels", [])]
+    lfs = opts.get("lfs", 12.0)
+    afs = opts.get("axis_fs", 11.0)
+    row_h = opts.get("row_h", 46.0)
+    bar_h = opts.get("bar_h", 26.0)
+    gap = opts.get("gap", 12.0)
+
+    n_rows = max(len(rows),
+                 max((int(n.get("row", 0)) + 1 for n in spec["nodes"]), default=1))
+    span = float(max(1, len(axis) - 1))
+
+    gutter = (max(T.tw(t, lfs) for t in rows) + opts.get("gutter_pad", 18.0)
+              if rows else 0.0)
+    head_h = opts.get("head_h", 30.0) if axis else 0.0
+    track_x = margin + gutter
+    track_w = width - 2 * margin - gutter
+    top = opts.get("y", margin) + head_h
+
+    def num(v, fallback=0.0):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return fallback
+
+    def clamp(v):
+        return min(max(v, 0.0), span)
+
+    # Pack each row's spans into sub-lanes. Two overlapping tasks in one row are
+    # a real thing to draw (parallel work), and stacking them is what makes both
+    # readable -- the alternative was letting them collide and then declaring the
+    # collision away.
+    by_row = {}
+    for n in spec["nodes"]:
+        by_row.setdefault(int(n.get("row", 0)), []).append(n)
+    lane_of, lane_count = {}, {}
+    for r, items in by_row.items():
+        ends = []
+        for n in sorted(items, key=lambda x: (clamp(num(x.get("start"))),
+                                              clamp(num(x.get("end"), 1.0)))):
+            a = clamp(num(n.get("start")))
+            b = max(a, clamp(num(n.get("end"), a + 1.0)))
+            for li, last in enumerate(ends):
+                if a >= last - 1e-9:
+                    lane_of[n["id"]], ends[li] = li, b
+                    break
+            else:
+                lane_of[n["id"]] = len(ends)
+                ends.append(b)
+        lane_count[r] = max(1, len(ends))
+
+    lane_gap = opts.get("lane_gap", 6.0)
+    lane_h = bar_h + lane_gap
+    # a row is as tall as its busiest lane stack, never less than row_h
+    row_top, y = {}, top
+    for r in range(n_rows):
+        row_top[r] = y
+        y += max(row_h, lane_count.get(r, 1) * lane_h - lane_gap + opts.get("row_pad", 18.0))
+
+    # ticks are drawn first so the bars sit on top of their own gridline
+    for i, text in enumerate(axis):
+        x = track_x + (i / span) * track_w
+        plan.annotations.append(Annotation("axis_tick", dict(
+            x=x, top=top - 8.0, bottom=y, label=text)))
+    for r, text in enumerate(rows):
+        plan.annotations.append(Annotation("text", dict(
+            x=margin + gutter - opts.get("gutter_pad", 18.0),
+            y=row_top.get(r, top) + row_h / 2.0, label=text, anchor="end", fs=lfs,
+            cls="d-tl-head")))
+
+    for n in spec["nodes"]:
+        r = int(n.get("row", 0))
+        a = clamp(num(n.get("start")))
+        b = max(a, clamp(num(n.get("end"), a + 1.0)))
+        x0 = track_x + (a / span) * track_w
+        x1 = track_x + (b / span) * track_w
+        w = max(opts.get("min_bar", 26.0), x1 - x0)
+        # A minimum-width bar sitting on the last tick would hang off the end,
+        # so slide it back inside rather than let it leave the canvas.
+        x0 = min(x0, track_x + track_w - w)
+        yy = row_top.get(r, top) + lane_of.get(n["id"], 0) * lane_h
+        plan.placements[n["id"]] = Rect(x0, yy, w, bar_h)
+        plan.shapes[n["id"]] = {"as": "bar"}
+
+    plan.size = (width, y - lane_gap + margin)
+    plan.allow_isolated = True      # bars sit on lanes, they do not connect
+    return plan
+
+
+@layout("funnel")
+def _funnel(spec) -> Plan:
+    """Stages that narrow, each drawn as the trapezoid into the next.
+
+    Stage widths follow ``value`` when every stage declares a positive number,
+    so the shape carries the drop-off; otherwise they fall off linearly to
+    ``min_ratio`` of the first. ``options.drop_labels`` annotates the gaps.
+    """
+    plan = Plan()
+    opts = spec.get("options", {})
+    width = opts.get("width", (spec.get("size") or [1200])[0])
+    margin = opts.get("margin", 60.0)
+    nodes = spec["nodes"]
+    if not nodes:
+        return plan
+    stage_h = opts.get("stage_h", 74.0)
+    gap = opts.get("gap", opts.get("stage_gap", 12.0))
+    top = opts.get("y", margin)
+    usable = width - 2 * margin - opts.get("side_pad", 120.0)
+
+    values = []
+    for n in nodes:
+        try:
+            v = float(n.get("value_n", n.get("value", 0)))
+        except (TypeError, ValueError):
+            v = 0.0
+        values.append(v if v > 0 else 0.0)
+    if all(v > 0 for v in values) and len(set(values)) > 1:
+        widths = [max(usable * opts.get("min_ratio", 0.18),
+                      usable * (v / values[0])) for v in values]
+    else:
+        lo = usable * opts.get("min_ratio", 0.18)
+        step = (usable - lo) / max(1, len(nodes) - 1)
+        widths = [usable - i * step for i in range(len(nodes))]
+
+    cx = width / 2.0
+    y = top
+    for i, n in enumerate(nodes):
+        w_top = widths[i]
+        w_bottom = widths[i + 1] if i + 1 < len(widths) else widths[i] * opts.get("tail_ratio", 0.86)
+        plan.placements[n["id"]] = Rect(cx - max(w_top, w_bottom) / 2.0, y,
+                                        max(w_top, w_bottom), stage_h)
+        plan.shapes[n["id"]] = {"as": "funnel", "w_top": w_top, "w_bottom": w_bottom}
+        drops = opts.get("drop_labels") or []
+        if i < len(drops) and drops[i]:
+            plan.annotations.append(Annotation("text", dict(
+                x=cx + max(w_top, w_bottom) / 2.0 + opts.get("drop_gap", 18.0),
+                y=y + stage_h + gap / 2.0, label=str(drops[i]), anchor="start",
+                fs=opts.get("dfs", 11.0), cls="d-fn-drop")))
+        y += stage_h + gap
+    plan.size = (width, y - gap + margin)
+    plan.allow_isolated = True      # stages flow by position, not by connectors
+    return plan
+
+
 @layout("free")
 def _free(spec) -> Plan:
     """Explicit coordinates. The escape hatch for hand-tuned figures."""
@@ -1007,16 +1228,39 @@ def render(spec, scene: Scene = None) -> Scene:
         n = by_id.get(nid)
         if n is None:
             continue
-        if n.get("as_card"):
+        hint = plan.shapes.get(nid) or {}
+        shape = (n.get("as") or hint.get("as")
+                 or ("card" if n.get("as_card") else
+                     "chip" if n.get("as_chip") else "node"))
+        if shape == "card":
             sc.card(r.x, r.y, r.w, r.h, n.get("title", ""), n.get("sub"),
                     n.get("items", []), kind=n.get("kind", "default"), id=nid,
                     fs=n.get("fs", 14.0), subfs=n.get("subfs", 10.5),
                     ifs=n.get("ifs", 11.5), pad=n.get("pad", 15.0),
                     gap=n.get("gap"), accent=n.get("accent"),
                     item_code=n.get("item_code", False))
-        elif n.get("as_chip"):
+        elif shape == "chip":
             sc.chip(r.x, r.y, r.w, r.h, n.get("title", ""),
                     kind=n.get("kind", "default"), id=nid, fs=n.get("fs", 12.5))
+        elif shape == "cell":
+            sc.cell(r.x, r.y, r.w, r.h, value=n.get("value"), label=n.get("title"),
+                    kind=n.get("kind", "default"), level=n.get("level", 0), id=nid,
+                    vfs=n.get("vfs", 17.0), lfs=n.get("lfs", 10.5),
+                    pad=n.get("pad", 10.0), rx=n.get("rx", 8.0))
+        elif shape == "bar":
+            sc.bar(r.x, r.y, r.w, r.h, n.get("title"),
+                   kind=n.get("kind", "teal"), dashed=n.get("dashed", False),
+                   id=nid, fs=n.get("fs", 11.0), pad=n.get("pad", 9.0))
+        elif shape == "funnel":
+            # An engine that computes the taper passes it through `shapes`; a
+            # hand-placed one declares `w_top` / `w_bottom` itself. Falling back
+            # to the rect for both ends would silently draw a plain rectangle.
+            sc.funnel(r.cx, r.y,
+                      hint.get("w_top", n.get("w_top", r.w)),
+                      hint.get("w_bottom", n.get("w_bottom", r.w)),
+                      r.h, n.get("title"), n.get("value"),
+                      kind=n.get("kind", "indigo"), id=nid,
+                      fs=n.get("fs", 12.5), vfs=n.get("vfs", 12.5))
         else:
             sc.node(r.x, r.y, r.w, r.h, n.get("title", ""), _subs(n),
                     kind=n.get("kind", "default"), id=nid,
@@ -1035,6 +1279,8 @@ def render(spec, scene: Scene = None) -> Scene:
                 to_id=c.to_id, dashed=c.dashed, head=c.head, tail=c.tail,
                 r=c.r, lfs=c.lfs, lx=lx, ly=ly, anchor=anchor, snap=c.snap)
 
+    if getattr(plan, "allow_isolated", False):
+        sc.allow_isolated = set(by_id)
     allow = opts.get("allow_isolated")
     if allow:
         sc.allow_isolated = set(by_id) if allow is True else set(allow)
@@ -1070,6 +1316,11 @@ def _annotate(sc: Scene, a: Annotation):
                 id=d["id"], fs=13.0, subfs=10.0, rx=10.0)
     elif k == "lane":
         sc.line([(d["x"], d["top"]), (d["x"], d["bottom"])], cls="d-life")
+    elif k == "axis_tick":
+        # the gridline a bar sits on, with its tick label above the strip
+        sc.line([(d["x"], d["top"]), (d["x"], d["bottom"])], cls="d-tl-tick")
+        sc.text(d["x"], d["top"] - 14.0, d["label"], cls="d-tl-axis",
+                anchor="middle", fs=d.get("fs", 11.0))
     elif k == "activation":
         sc.raw(f'<rect class="d-act" x="{d["x"] - 6:g}" y="{d["y0"]:g}" width="12" '
                f'height="{d["y1"] - d["y0"]:g}" rx="5"/>')

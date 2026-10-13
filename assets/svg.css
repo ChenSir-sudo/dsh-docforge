@@ -92,3 +92,46 @@
 .dg .d-sub   { fill: var(--ink-3); }
 .dg .d-errbox  { fill: var(--c-red-bg); stroke: var(--c-red); stroke-width: 1.4; }
 .dg .d-errtext { fill: var(--c-red); font-weight: 600; }
+
+/* ---------------------------------------------------- data-shaped figures */
+/* One accent var per kind, so a cell, bar or funnel tints itself from its own
+   kind without needing a rule for every kind x primitive pair. */
+.dg .k-indigo { --cell-accent: var(--c-indigo); }
+.dg .k-teal   { --cell-accent: var(--c-teal); }
+.dg .k-amber  { --cell-accent: var(--c-amber); }
+.dg .k-red    { --cell-accent: var(--c-red); }
+.dg .k-green  { --cell-accent: var(--c-green); }
+.dg .k-violet { --cell-accent: var(--c-violet); }
+.dg .k-slate, .dg .k-line, .dg .k-default { --cell-accent: var(--c-slate); }
+.dg .k-ink    { --cell-accent: var(--c-ink-ink); }
+
+.dg .d-cell   { stroke: var(--line-strong); stroke-width: 1; }
+.dg .d-cell.lv-0 { fill: var(--surface); }
+.dg .d-cell.lv-1 { fill: color-mix(in srgb, var(--cell-accent) 16%, var(--surface)); }
+.dg .d-cell.lv-2 { fill: color-mix(in srgb, var(--cell-accent) 34%, var(--surface)); }
+.dg .d-cell.lv-3 { fill: color-mix(in srgb, var(--cell-accent) 54%, var(--surface)); }
+.dg .d-cell.lv-4 { fill: color-mix(in srgb, var(--cell-accent) 76%, var(--surface)); }
+.dg .d-cell-v { fill: var(--ink); font-weight: 700; }
+.dg .d-cell-l { fill: var(--ink-3); }
+
+.dg .d-bar {
+  fill: color-mix(in srgb, var(--cell-accent) 24%, var(--surface));
+  stroke: var(--cell-accent); stroke-width: 1.2;
+}
+.dg .d-bar-t { fill: var(--ink); font-weight: 600; }
+
+.dg .d-funnel {
+  fill: color-mix(in srgb, var(--cell-accent) 18%, var(--surface));
+  stroke: var(--cell-accent); stroke-width: 1.3;
+}
+.dg .d-funnel-v { fill: var(--ink); font-weight: 700; }
+.dg .d-funnel-l { fill: var(--ink-2); }
+
+/* matrix / timeline captions. Kept out of the box roles on purpose: these are
+   axis text, so they are measured as labels and can collide with a cell. */
+.dg .d-mx-head   { fill: var(--ink-2); font-weight: 700; }
+.dg .d-mx-corner { fill: var(--ink-3); }
+.dg .d-tl-head   { fill: var(--ink-2); font-weight: 700; }
+.dg .d-tl-axis   { fill: var(--ink-3); font-weight: 600; }
+.dg .d-fn-drop   { fill: var(--c-red-ink); font-weight: 600; }
+.dg .d-tl-tick   { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; }

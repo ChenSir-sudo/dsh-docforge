@@ -1,0 +1,25 @@
+{
+  "id": "matrix",
+  "layout": "matrix",
+  "title": "优先级矩阵",
+  "kind": "矩阵图",
+  "size": [980, 460],
+  "options": {
+    "row_labels": ["影响大", "影响小"],
+    "col_labels": ["容易做", "难做"],
+    "corner": "优先级",
+    "cell_h": 116,
+    "gap": 14,
+    "margin": 44
+  },
+  "nodes": [
+    {"id": "a", "row": 0, "col": 0, "value": "12", "title": "立刻做", "level": 3, "kind": "red"},
+    {"id": "b", "row": 0, "col": 1, "value": "7", "title": "排期做", "level": 2, "kind": "amber"},
+    {"id": "c", "row": 1, "col": 0, "value": "5", "title": "顺手做", "level": 1, "kind": "teal"},
+    {"id": "d", "row": 1, "col": 1, "value": "2", "title": "先不做", "level": 0, "kind": "slate"}
+  ],
+  "notes": [
+    {"type": "text", "x": 44, "y": 430,
+     "text": "level 0–4 决定底色深浅：数值本身不用读者去比较，颜色已经分好档。", "cls": "d-fig-t"}
+  ]
+}
