@@ -78,9 +78,13 @@ docforge skill-info
 }
 ```
 
+![全部布局引擎](docs/images/engines.png)
+
 十四个布局引擎。关系型：`pipeline` `dag` `fan` `layers` `hub` `ring` `sequence` `state` `grid` `free`；
 数据型：`matrix`（格子网格，深浅连续可调）、`timeline`（沿一根轴的区间，重叠自动分道，可画依赖箭头）、
-`funnel`（按数值收窄的阶段）；层级：`tree`。
+`funnel`（按数值收窄的阶段）；层级：`tree`。深色模式同一组见 [`docs/images/engines-dark.png`](docs/images/engines-dark.png)。
+
+
 每个的用途和参数：
 
 ```bash

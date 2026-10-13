@@ -125,13 +125,24 @@ def validate_spec(spec: dict) -> list:
     return out
 
 
-def _scene_svg(scene, theme, mode, standalone) -> str:
+def scene_svg(scene, theme=None, mode="light", standalone=True) -> str:
+    """Render an already-built scene, with its backdrop when standalone.
+
+    Public because the CLI needs the scene for other things (its size, the PNG
+    height) and so used to assemble the standalone SVG itself -- and forgot the
+    backdrop, which is invisible on a light theme and produces a white-backed
+    dark export.
+    """
     if standalone:
         theme = theme or Theme.load("paper")
         return _with_background(
             scene.svg(standalone=True, palette=theme.palette(mode),
                       svg_css=_svg_css()), scene)
     return scene.svg()
+
+
+def _scene_svg(scene, theme, mode, standalone) -> str:
+    return scene_svg(scene, theme, mode, standalone)
 
 
 def render(spec) -> Scene:

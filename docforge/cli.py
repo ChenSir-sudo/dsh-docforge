@@ -177,9 +177,10 @@ def cmd_fig(args) -> int:
     if args.debug:
         scene.mark_findings(findings)
 
-    svg = (scene.svg(standalone=True, palette=theme.palette(args.mode),
-                     svg_css=theme.svg_css())
-           if not args.inline else scene.svg())
+    # Route through the shared builder: assembling this here once already meant
+    # the standalone export silently lost its canvas backdrop.
+    svg = specs.scene_svg(scene, theme=theme, mode=args.mode,
+                          standalone=not args.inline)
 
     # `docforge fig x.json > f.svg` must produce a clean SVG, so when the markup
     # goes to stdout the report goes to stderr instead of corrupting the stream.

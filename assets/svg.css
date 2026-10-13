@@ -97,7 +97,10 @@
 
 /* ---- sequence / state / standalone extras ---- */
 .dg .d-card  { stroke-width: 1.1; }
-.dg .d-canvas { fill: var(--surface); }
+/* The page behind the figure is the page colour, not a card surface. On the
+   light theme the two are near enough that this went unnoticed; on the dark
+   theme a surface colour paints a light backdrop behind dark cards. */
+.dg .d-canvas { fill: var(--bg); }
 .dg .d-act   { fill: var(--surface-3); stroke: var(--line-strong); stroke-width: 1; }
 .dg .d-lane  { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.4; }
 .dg .d-life  { stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 4 6; }

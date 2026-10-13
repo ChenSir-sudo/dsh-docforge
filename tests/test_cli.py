@@ -12,6 +12,7 @@ import io
 import json
 import shutil
 import tempfile
+import pathlib
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -213,3 +214,48 @@ class ExitCodeContractTest(TmpMixin, unittest.TestCase):
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
+
+
+class StandaloneBackdropTest(unittest.TestCase):
+    """`fig` output must carry its own background.
+
+    The CLI used to assemble the standalone SVG itself, and doing so skipped the
+    backdrop rect -- invisible on a light theme, and a white-backed dark export.
+    A figure that only looks right on one palette is not a standalone figure.
+    """
+
+    FIGURE = {"id": "bd", "layout": "free", "size": [400, 200],
+              "nodes": [{"id": "a", "title": "A", "x": 20, "y": 20,
+                         "width": 100, "height": 40}],
+              "options": {"allow_isolated": True}}
+
+    def _svg(self, mode):
+        import json
+        import tempfile
+        from docforge import specs
+        from docforge.theme import Theme
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
+            json.dump(self.FIGURE, fh)
+            path = fh.name
+        scene = specs.render(specs.load(path))
+        return specs.scene_svg(scene, theme=Theme.load("paper"), mode=mode,
+                               standalone=True)
+
+    def test_a_standalone_export_has_a_backdrop(self):
+        for mode in ("light", "dark"):
+            self.assertIn('class="d-canvas"', self._svg(mode),
+                          f"{mode} export has no backdrop")
+
+    def test_the_dark_backdrop_is_dark(self):
+        """The canvas must paint the page colour, not a surface token."""
+        svg = self._svg("dark")
+        self.assertIn("--bg:#0b1017", svg)
+        self.assertIn(".dg .d-canvas", svg)
+
+    def test_the_backdrop_uses_the_page_colour(self):
+        css = (pathlib.Path(__file__).resolve().parent.parent
+               / "assets" / "svg.css").read_text(encoding="utf-8")
+        rule = [l for l in css.splitlines() if "d-canvas" in l]
+        self.assertTrue(rule, "no .d-canvas rule")
+        self.assertIn("var(--bg)", " ".join(rule),
+                      "the backdrop must be the page colour, not the surface")

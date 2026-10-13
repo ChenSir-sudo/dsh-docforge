@@ -89,11 +89,16 @@ content** — you never compute coordinates.
 }
 ```
 
+![Every layout engine](docs/images/engines.png)
+
 Fourteen layout engines. Relational shapes: `pipeline` `dag` `fan` `layers` `hub`
 `ring` `sequence` `state` `grid` `free`. Data shapes: `matrix` (a grid of cells,
 tinted continuously), `timeline` (spans on one axis, auto-packed into sub-lanes
 when they overlap, with dependency arrows), `funnel` (stages that narrow by
-value). Hierarchy: `tree`. Ask for the current list and each one's parameters:
+value). Hierarchy: `tree`. The same set in dark mode:
+[`docs/images/engines-dark.png`](docs/images/engines-dark.png).
+
+Ask for the current list and each one's parameters:
 
 ```bash
 bin/docforge layouts
@@ -261,6 +266,7 @@ docforge fig figures/flow.json --debug -o debug.svg
 Two optional tools need a browser, and both say so rather than passing quietly:
 
 ```bash
+python3 tools/gallery.py           # rebuild docs/images/ from the recorded baselines
 sh tools/golden.sh                 # compare every shipped figure against a recorded render
 sh tools/golden.sh --update        # re-record the baselines
 python3 tools/measure-text.py      # compare the width estimate with real glyphs
