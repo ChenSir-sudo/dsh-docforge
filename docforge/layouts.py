@@ -743,7 +743,13 @@ def _hub(spec) -> Plan:
         for nid in ids:
             r = plan.placements[nid]
             plan.connectors.append(Connector(
-                [port(r, side), (trunk, r.cy), (trunk, c.cy), port(c, "left" if side == "left" else "right")],
+                # Leave the satellite on the side *facing* the trunk. Using
+                # `side` itself put the left column's exit on its far edge, so
+                # the connector ran back across the node it belongs to -- and
+                # `edge-through` could not see it, because a connector's own
+                # endpoints were exempt.
+                [port(r, opposite(side)), (trunk, r.cy), (trunk, c.cy),
+                 port(c, side)],
                 kind="slate", from_id=nid, to_id=center, r=12,
             ))
     if below:
@@ -1265,6 +1271,7 @@ def _timeline(spec) -> Plan:
                     f"layout 'timeline': link names {end!r}, which is not a bar"
                 )
         a, b = plan.placements[src], plan.placements[dst]
+        gutter = opts.get("link_gutter", 18.0)
         if b.x >= a.right:
             mid = (a.right + b.x) / 2.0
             pts = [(a.right, a.cy), (mid, a.cy), (mid, b.cy), (b.x - 3, b.cy)]
@@ -1274,9 +1281,25 @@ def _timeline(spec) -> Plan:
                 link["lx"] = mid + 5.0
                 link.setdefault("ly", (a.cy + b.cy) / 2.0)
                 link.setdefault("anchor", "start")
+        elif b.right >= a.right:
+            # The target overlaps the source and reaches further right, so it
+            # cannot be entered from its left. Leave to the right and come back
+            # in through its right edge. Leaving from the source's *bottom*
+            # instead is what ran the line straight into the bar below it, when
+            # the two overlap in x and sit on different sub-lanes.
+            x = max(a.right, b.right) + gutter
+            pts = [(a.right, a.cy), (x, a.cy), (x, b.cy), (b.right + 3, b.cy)]
+            if link.get("lx") is None:
+                link["lx"] = x + 5.0
+                link.setdefault("ly", (a.cy + b.cy) / 2.0)
+                link.setdefault("anchor", "end")
         else:
+            # Genuinely backwards in time: go around underneath, and exit
+            # sideways so the descent clears whatever is below the source.
             ch = max(a.bottom, b.bottom) + opts.get("link_gap", 20.0)
-            pts = [(a.cx, a.bottom), (a.cx, ch), (b.cx, ch), (b.cx, b.bottom + 3)]
+            x = max(a.right, b.right) + gutter
+            pts = [(a.right, a.cy), (x, a.cy), (x, ch), (b.cx, ch),
+                   (b.cx, b.bottom + 3)]
             if link.get("lx") is None:
                 link["lx"] = (a.cx + b.cx) / 2.0
                 link.setdefault("ly", ch - 9.0)

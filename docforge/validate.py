@@ -246,6 +246,20 @@ def _check_band_overlap(scene, bands, out):
                 ))
 
 
+#: How far a connector may run into the node it attaches to before that counts
+#: as crossing it. Arrows stop a few px inside the boundary by design.
+ATTACH_TOL = 4.0
+
+
+def _inset(rect, by):
+    """*rect* shrunk by *by* on every side, or None if that leaves nothing."""
+    from .geom import Rect
+    w, h = rect.w - 2 * by, rect.h - 2 * by
+    if w <= 0 or h <= 0:
+        return None
+    return Rect(rect.x + by, rect.y + by, w, h)
+
+
 def _check_edges(scene, items, boxes, clearance, out):
     for it in items:
         if it.kind not in ("edge", "arc"):
@@ -266,15 +280,21 @@ def _check_edges(scene, items, boxes, clearance, out):
             # construction. Measured as a connector it produced nothing but
             # false positives on sequence diagrams.
             continue
-        # An arc must clear *every* node, including the two it joins: a ring arc
-        # whose sweep is too long cuts straight through the node it is heading
-        # for, and excluding its own endpoints is what used to hide that.
-        attached = set() if it.kind == "arc" else {e for e in it.endpoints if e}
-        pad = clearance + (4.0 if it.kind == "arc" else 0.0)
+        # A connector has to clear *every* node -- including the two it joins.
+        # Exempting its own endpoints hides the case where it leaves the wrong
+        # edge of a node and runs back across it, which is not a near miss: the
+        # line covers the box it belongs to. Touching the boundary is how an
+        # edge attaches, so an endpoint node is tested against an inset box
+        # instead of being skipped.
+        attached = {e for e in it.endpoints if e}
         for box in boxes:
             if box.id in attached:
-                continue
-            hit = _segments_hit(it.pts, box.bbox, pad)
+                inner = _inset(box.bbox, ATTACH_TOL)
+                if inner is None:
+                    continue
+                hit = _segments_hit(it.pts, inner, 0.0)
+            else:
+                hit = _segments_hit(it.pts, box.bbox, clearance)
             if hit:
                 out.append(Finding(
                     "edge-through", ERROR,

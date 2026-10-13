@@ -157,10 +157,16 @@ class BoxOverlapTest(unittest.TestCase):
 # --------------------------------------------------------------------------
 class EdgeThroughTest(unittest.TestCase):
     def _scene(self, stopper, attach_both=False, from_id=True):
+        """A edge from A to B, stopping at *stopper*.
+
+        It starts 2px inside A (A spans 20..100) so that only the target end is
+        ever under test: starting further in would be a real penetration and
+        would mask what each case is checking.
+        """
         sc = _scene("eth", 600, 300)
         a = sc.node(20, 140, 80, 40, "A")
         b = sc.node(300, 140, 80, 40, "B")
-        sc.edge([(95, 160), (stopper, 160)],
+        sc.edge([(98, 160), (stopper, 160)],
                 from_id=a.id if from_id else None,
                 to_id=b.id if attach_both else None)
         return sc
@@ -179,9 +185,56 @@ class EdgeThroughTest(unittest.TestCase):
         b = [i for i in sc.items if i.kind == "node"][1]
         self.assertEqual(hits[0].detail["blocked_by"], b.id)
 
-    def test_edge_attached_to_both_endpoints_is_never_reported(self):
-        sc = self._scene(340, attach_both=True)
+    def test_an_edge_attached_at_both_ends_is_not_reported(self):
+        """Joining two named nodes at their boundaries is the normal case."""
+        sc = self._scene(298, attach_both=True)
         self.assertNotIn("edge-through", codes(sc))
+
+    def test_penetrating_your_own_target_is_reported(self):
+        """Being an endpoint is not a licence to run through the node."""
+        sc = self._scene(340, attach_both=True)
+        hits = findings(sc, "edge-through")
+        self.assertEqual(len(hits), 1)
+        # `blocked_by` names the item, not the title shown on it.
+        b = [i for i in sc.items if i.kind == "node"][1]
+        self.assertEqual(hits[0].detail["blocked_by"], b.id)
+
+    def test_an_edge_crossing_its_own_endpoint_is_reported(self):
+        """The case that used to be invisible.
+
+        A connector that leaves the *far* edge of the node it starts from runs
+        back across it -- the line covers its own box. Exempting an edge's
+        endpoints hid exactly this, and three shipped figures had it.
+        """
+        sc = _scene("selfcross", 600, 300)
+        src = sc.node(200, 120, 200, 80, "Source")
+        dst = sc.node(480, 120, 100, 80, "Target")
+        # leaves Source's left edge and runs through it, rather than its right
+        sc.edge([(200, 160), (520, 160)], from_id=src.id, to_id=dst.id)
+        # It crosses Source on the way out and Target on the way in: the point
+        # is that neither is exempt for being an endpoint.
+        blocked = sorted(h.detail["blocked_by"] for h in findings(sc, "edge-through"))
+        self.assertEqual(sorted([src.id, dst.id]), blocked)
+
+    def _attach_scene(self, inset):
+        sc = _scene(f"attach{inset}", 600, 300)
+        a = sc.node(100, 120, 160, 80, "From")
+        b = sc.node(400, 120, 160, 80, "To")
+        sc.edge([(263, 160), (400 + inset, 160)], from_id=a.id, to_id=b.id)
+        return sc
+
+    def test_an_arrow_stopping_just_inside_its_target_is_allowed(self):
+        """Arrowheads land a few px inside the boundary by design.
+
+        The tolerance is a real boundary, not a formality: 3px is an
+        attachment, 4px is the line starting to cover the box.
+        """
+        for inset in (0.0, 2.0, 3.0):
+            self.assertNotIn("edge-through", codes(self._attach_scene(inset)),
+                             f"a {inset}px overlap is an attachment")
+
+    def test_past_the_attach_tolerance_the_line_counts_as_crossing(self):
+        self.assertIn("edge-through", codes(self._attach_scene(5.0)))
 
     def test_edge_attached_to_the_source_only_still_reports_the_target(self):
         sc = self._scene(340, attach_both=False, from_id=True)
